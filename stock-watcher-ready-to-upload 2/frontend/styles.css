@@ -733,3 +733,19 @@ img {
   );
   pointer-events: none;
 }
+/* === FORCE CHART INTO A BOX (OVERRIDE) === */
+.chart-wrap {
+  max-width: 1200px;
+  margin: 24px auto;
+}
+
+.chart-shell {
+  background-color: #0b0f16 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+}
+.chart-area {
+  height: 420px !important;
+}

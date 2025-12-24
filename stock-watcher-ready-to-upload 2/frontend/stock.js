@@ -2,218 +2,201 @@
    Valyxis — Stock Chart Page
    ========================= */
 
-(() => {
-  const params = new URLSearchParams(window.location.search);
-  const TICKER = (params.get("ticker") || "").toUpperCase();
+const params = new URLSearchParams(window.location.search);
+const TICKER = (params.get("ticker") || "").toUpperCase();
+const API_BASE = "";
 
-  // ✅ Your Render backend base URL:
-  const API_BASE = "https://stockapp-kym2.onrender.com";
+// DOM
+const chartEl = document.getElementById("chart");
+const priceEl = document.getElementById("price");
+const changeEl = document.getElementById("change");
+const nameEl = document.getElementById("company-name");
+const sectorEl = document.getElementById("company-sector");
 
-  // --- Helpers ---
-  const $ = (sel) => document.querySelector(sel);
+const prevCloseEl = document.getElementById("prev-close");
+const high52El = document.getElementById("high-52");
+const peEl = document.getElementById("pe");
+const pegEl = document.getElementById("peg");
+const epsEl = document.getElementById("eps");
+const divEl = document.getElementById("dividend");
 
-  function pick(...selectors) {
-    for (const s of selectors) {
-      const el = $(s);
-      if (el) return el;
+let lastChartData = [];
+let currentPeriod = "1y";
+
+/* =========================
+   Helpers
+   ========================= */
+
+function fmt(n, d = 2) {
+  return n == null || isNaN(n) ? "—" : Number(n).toFixed(d);
+}
+
+function colorize(el, val) {
+  if (!el) return;
+  if (val > 0) el.style.color = "#2ecc71";
+  else if (val < 0) el.style.color = "#e74c3c";
+  else el.style.color = "#aaa";
+}
+
+/* =========================
+   Chart (SVG)
+   ========================= */
+
+function renderChart(data) {
+  if (!chartEl || !data || data.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+    return;
+  }
+
+  lastChartData = data;
+
+  // Use actual rendered size of the box
+  const rect = chartEl.getBoundingClientRect();
+  const w = Math.max(800, Math.floor(rect.width));
+  const h = Math.max(420, Math.floor(rect.height));
+
+  // Extract prices and REMOVE invalid values
+  const prices = data
+    .map(d => Number(d.close))
+    .filter(v => Number.isFinite(v));
+
+  if (prices.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+    return;
+  }
+
+  // ---- ROBUST SCALING (THIS FIXES FLAT CHARTS) ----
+  const sorted = [...prices].sort((a, b) => a - b);
+  const n = sorted.length;
+
+  const min = sorted[Math.floor(n * 0.05)];
+  const max = sorted[Math.ceil(n * 0.95) - 1];
+  const range = max - min || 1;
+  const pad = range * 0.15;
+
+  const points = prices.map((p, i) => {
+    const x = (i / (prices.length - 1)) * w;
+    const y = h - ((p - (min - pad)) / (range + pad * 2)) * h;
+    return `${x},${y}`;
+  }).join(" ");
+
+  chartEl.innerHTML = `
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <polyline
+        points="${points}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
+      <polygon
+        points="${points} ${w},${h} 0,${h}"
+        fill="url(#fillGrad)"
+      />
+
+      <circle
+        cx="${w}"
+        cy="${points.split(" ").pop().split(",")[1]}"
+        r="4"
+        fill="#2ecc71"
+      />
+    </svg>
+  `;
+}
+
+/* =========================
+   Load Data
+   ========================= */
+
+async function loadStock(period = "1y") {
+  currentPeriod = period;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/history?ticker=${TICKER}&period=${period}`
+    );
+
+    if (!res.ok) throw new Error("API error");
+
+    const json = await res.json();
+    const { meta, prices } = json;
+
+    // Header
+    nameEl.textContent = meta.longName || TICKER;
+    sectorEl.textContent = meta.sector || "—";
+    priceEl.textContent = meta.price != null ? `$${fmt(meta.price)}` : "$—";
+
+    // Change
+    if (prices.length >= 2) {
+      const diff = prices.at(-1).close - prices.at(-2).close;
+      const pct = (diff / prices.at(-2).close) * 100;
+      changeEl.textContent = `${fmt(diff)} (${fmt(pct)}%)`;
+      colorize(changeEl, diff);
+    } else {
+      changeEl.textContent = "—";
     }
-    return null;
+
+    // Stats
+    prevCloseEl.textContent =
+      prices.length >= 2 ? fmt(prices.at(-2).close) : "—";
+
+    high52El.textContent = fmt(meta.high52w);
+    peEl.textContent = fmt(meta.pe);
+    pegEl.textContent = fmt(meta.peg);
+    epsEl.textContent = fmt(meta.eps);
+
+    divEl.textContent =
+      meta.dividendYieldPct != null
+        ? fmt(meta.dividendYieldPct) + "%"
+        : "—";
+
+    renderChart(prices);
+  } catch (err) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#e74c3c">Error loading chart</div>`;
+    console.error(err);
   }
+}
 
-  function setText(el, text) {
-    if (!el) return;
-    el.textContent = text;
-  }
+/* =========================
+   Timeframe Buttons
+   ========================= */
 
-  function fmt(n, d = 2) {
-    if (n == null || Number.isNaN(Number(n))) return "—";
-    return Number(n).toFixed(d);
-  }
+document.querySelectorAll("[data-period]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll("[data-period]")
+      .forEach(b => b.classList.remove("active"));
 
-  function fmtMoney(n, d = 2) {
-    if (n == null || Number.isNaN(Number(n))) return "—";
-    return `$${Number(n).toFixed(d)}`;
-  }
-
-  function fmtPct(n, d = 2) {
-    if (n == null || Number.isNaN(Number(n))) return "—";
-    return `${Number(n).toFixed(d)}%`;
-  }
-
-  function colorize(el, val) {
-    if (!el) return;
-    if (val > 0) el.style.color = "#2ecc71";
-    else if (val < 0) el.style.color = "#e74c3c";
-    else el.style.color = "#aeb3bd";
-  }
-
-  function buildHistoryUrl(period, ticker = TICKER) {
-    return `${API_BASE}/history?ticker=${encodeURIComponent(
-      ticker
-    )}&period=${encodeURIComponent(period)}`;
-  }
-
-  // --- DOM targets ---
-  const chartEl = pick("#chart", ".chart-container #chart");
-
-  const priceEl = pick("#price", "#header-price", ".js-price");
-  const changeEl = pick("#change", "#header-change", ".js-change");
-
-  const tickerEl = pick("#ticker", ".js-ticker");
-  const nameEl = pick("#company-name", ".js-company-name");
-  const sectorEl = pick("#company-sector", ".js-sector");
-
-  const prevCloseEl = pick("#prev-close", ".js-prev-close");
-  const high52El = pick("#high-52", ".js-high52");
-  const peEl = pick("#pe", ".js-pe");
-  const pegEl = pick("#peg", ".js-peg");
-  const epsEl = pick("#eps", ".js-eps");
-  const divEl = pick("#dividend", ".js-dividend");
-
-  // --- Chart (SVG) ---
-  function renderChart(data) {
-    if (!chartEl) return;
-
-    if (!Array.isArray(data) || data.length < 2) {
-      chartEl.innerHTML = "<div class='chart-error'>No chart data</div>";
-      return;
-    }
-
-    const rect = chartEl.getBoundingClientRect();
-const w = Math.max(600, Math.floor(rect.width || chartEl.clientWidth));
-const h = 420; // hard lock height to prevent flattening
-
-    const prices = data
-      .map((d) => d.close)
-      .filter((x) => x != null && !Number.isNaN(Number(x)));
-
-    if (prices.length < 2) {
-      chartEl.innerHTML = "<div class='chart-error'>No chart data</div>";
-      return;
-    }
-
-       // --- Robust Y-scale (prevents "flat" charts from outliers like 0) ---
-    const sorted = [...prices].sort((a, b) => a - b);
-    const n = sorted.length;
-
-    // Use 2nd–98th percentile so one bad value can't flatten the chart
-    const lo = sorted[Math.floor(n * 0.02)];
-    const hi = sorted[Math.ceil(n * 0.98) - 1];
-
-    // Fallback if percentiles collapse (very small dataset)
-    const min = Number.isFinite(lo) ? lo : Math.min(...prices);
-    const max = Number.isFinite(hi) ? hi : Math.max(...prices);
-
-    const range = max - min || 1;
-    const pad = range * 0.10; // a bit more padding so it breathes
-ding
-
-
-    const points = prices
-      .map((p, i) => {
-        const x = (i / (prices.length - 1)) * w;
-        const y =
-          h -
-          ((p - (min - pad)) / ((max - min) + pad * 2)) * h;
-        return `${x.toFixed(2)},${y.toFixed(2)}`;
-      })
-      .join(" ");
-
-    const last = points.split(" ").pop().split(",");
-    const lastX = last[0];
-    const lastY = last[1];
-
-    chartEl.innerHTML = `
-      <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.28" />
-            <stop offset="100%" stop-color="#4c8dff" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-
-        <g opacity="0.18">
-          ${Array.from({ length: 5 })
-            .map((_, i) => {
-              const y = ((i / 4) * h).toFixed(2);
-              return `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#ffffff" stroke-width="1"/>`;
-            })
-            .join("")}
-        </g>
-
-        <path d="M 0 ${h} L ${points.replace(/ /g, " L ")} L ${w} ${h} Z" fill="url(#areaGrad)"></path>
-
-        <polyline points="${points}" fill="none" stroke="#4c8dff" stroke-width="2.25" />
-
-        <circle cx="${lastX}" cy="${lastY}" r="4.5" fill="#2ecc71"></circle>
-      </svg>
-    `;
-  }
-
-  // --- Load Data ---
-  async function loadStock(period = "1y") {
-    try {
-      if (!TICKER) throw new Error("No ticker provided");
-
-      const url = buildHistoryUrl(period);
-      const r = await fetch(url);
-
-      if (!r.ok) throw new Error(`API error ${r.status}`);
-
-      const json = await r.json();
-
-      const meta = json.meta || {};
-      const prices = Array.isArray(json.prices) ? json.prices : [];
-
-      setText(tickerEl, json.ticker || TICKER);
-      setText(nameEl, meta.longName || TICKER);
-      setText(sectorEl, meta.sector || "—");
-      setText(priceEl, meta.price != null ? fmtMoney(meta.price) : "—");
-
-      if (prices.length >= 2) {
-        const prev = prices[prices.length - 2]?.close;
-        const last = prices[prices.length - 1]?.close;
-        if (prev != null && last != null) {
-          const diff = last - prev;
-          const pct = (diff / prev) * 100;
-          setText(changeEl, `${fmtMoney(diff)} (${fmtPct(pct)})`);
-          colorize(changeEl, diff);
-        }
-      } else {
-        setText(changeEl, "—");
-      }
-
-      setText(prevCloseEl, prices.length >= 2 ? fmt(prices[prices.length - 2]?.close) : "—");
-      setText(high52El, meta.high52w != null ? fmt(meta.high52w) : "—");
-      setText(peEl, meta.pe != null ? fmt(meta.pe) : "—");
-      setText(pegEl, meta.peg != null ? fmt(meta.peg) : "—");
-      setText(epsEl, meta.eps != null ? fmt(meta.eps) : "—");
-      setText(divEl, meta.dividendYieldPct != null ? fmtPct(meta.dividendYieldPct) : "—");
-
-      renderChart(prices);
-    } catch (e) {
-      console.error("Error loading chart:", e);
-      if (chartEl) chartEl.innerHTML = "<div class='chart-error'>Error loading chart</div>";
-    }
-  }
-
-  function wireButtons() {
-    const buttons = document.querySelectorAll("[data-period]");
-    buttons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        buttons.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        loadStock(btn.dataset.period || "1y");
-      });
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    if (!TICKER) {
-      alert("No ticker provided. Use URL like: stock.html?ticker=AAPL");
-      return;
-    }
-    wireButtons();
-    loadStock("1y");
+    btn.classList.add("active");
+    loadStock(btn.dataset.period);
   });
-})();
+});
+
+/* =========================
+   Resize (keeps chart correct)
+   ========================= */
+
+window.addEventListener("resize", () => {
+  if (lastChartData.length) {
+    renderChart(lastChartData);
+  }
+});
+
+/* =========================
+   Init
+   ========================= */
+
+if (!TICKER) {
+  alert("No ticker provided");
+} else {
+  loadStock("1y");
+}

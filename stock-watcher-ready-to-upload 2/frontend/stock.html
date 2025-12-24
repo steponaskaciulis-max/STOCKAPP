@@ -9,55 +9,55 @@
 
 <body>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="brand">
-      <div class="logo-badge">
-        <img src="assets/valyxis-logo.png" />
+<div class="chart-page">
+
+  <!-- ===== STOCK HEADER ===== -->
+  <div class="stock-header">
+    <div class="stock-title">
+      <h1 id="ticker">NVDA</h1>
+      <div class="stock-meta">
+        <span id="company">NVIDIA Corporation</span>
+        <span class="dot">•</span>
+        <span id="sector">Technology</span>
       </div>
-      <span class="logo-text">Valyxis</span>
-    </div>
-    <a class="nav-link" href="dashboard.html">Dashboard</a>
-  </nav>
-
-  <!-- CONTENT -->
-  <main class="stock-page">
-
-    <header class="stock-header">
-      <h1 id="stockTitle">—</h1>
-      <p id="stockSubtitle" class="muted">—</p>
-    </header>
-
-    <!-- TIMEFRAME -->
-    <div class="timeframes">
-      <button data-tf="7d">1W</button>
-      <button data-tf="1mo">1M</button>
-      <button data-tf="3mo">3M</button>
-      <button data-tf="1y" class="active">1Y</button>
-      <button data-tf="5y">5Y</button>
-      <button data-tf="max">MAX</button>
     </div>
 
-    <!-- CHART -->
-    <div class="chart-card">
-      <svg id="priceChart" width="100%" height="360"></svg>
+    <div class="stock-price">
+      <div class="price" id="price">$187.28</div>
+      <div class="change positive" id="change">+1.42 (0.51%)</div>
+    </div>
+  </div>
+
+  <!-- ===== CHART SECTION ===== -->
+  <div class="chart-section">
+    <div class="chart-controls">
+      <button class="tf active" data-range="1y">1Y</button>
+      <button class="tf" data-range="6m">6M</button>
+      <button class="tf" data-range="3m">3M</button>
+      <button class="tf" data-range="1m">1M</button>
+      <button class="tf" data-range="5d">5D</button>
+      <button class="tf" data-range="1d">1D</button>
     </div>
 
-    <!-- METRICS -->
-    <div class="metrics">
-      <div><span>Price</span><strong id="mPrice">—</strong></div>
-      <div><span>1D %</span><strong id="m1d">—</strong></div>
-      <div><span>52W High</span><strong id="m52w">—</strong></div>
-      <div><span>Drawdown</span><strong id="mDD">—</strong></div>
-      <div><span>P/E</span><strong id="mPE">—</strong></div>
-      <div><span>PEG</span><strong id="mPEG">—</strong></div>
-      <div><span>EPS</span><strong id="mEPS">—</strong></div>
-      <div><span>Div %</span><strong id="mDIV">—</strong></div>
+    <div class="chart-container">
+      <div id="chart"></div>
     </div>
+  </div>
 
-  </main>
+  <!-- ===== STATS GRID ===== -->
+  <div class="stats-grid">
+    <div><span>Previous Close</span><strong id="prevClose">—</strong></div>
+    <div><span>52W Range</span><strong id="range52w">—</strong></div>
+    <div><span>P/E</span><strong id="pe">—</strong></div>
+    <div><span>PEG</span><strong id="peg">—</strong></div>
+    <div><span>EPS</span><strong id="eps">—</strong></div>
+    <div><span>Dividend</span><strong id="dividend">—</strong></div>
+  </div>
 
-  <script src="stock.js"></script>
+</div>
+
+<script src="chart.js"></script>
 </body>
+
 </html>
 

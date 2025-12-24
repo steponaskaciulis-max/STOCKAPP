@@ -80,8 +80,8 @@
     }
 
     const rect = chartEl.getBoundingClientRect();
-    const w = Math.max(600, Math.floor(rect.width || chartEl.clientWidth));
-    const h = Math.max(320, Math.floor(rect.height || chartEl.clientHeight));
+const w = Math.max(600, Math.floor(rect.width || chartEl.clientWidth));
+const h = 420; // hard lock height to prevent flattening
 
     const prices = data
       .map((d) => d.close)

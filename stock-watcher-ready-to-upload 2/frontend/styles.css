@@ -912,3 +912,25 @@ body {
   column-gap: 18px;
   row-gap: 18px;
 }
+.timeframe-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  margin: 16px 0 18px;
+}
+.timeframe-row {
+  position: relative;
+}
+
+.timeframe-row::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}

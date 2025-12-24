@@ -182,64 +182,6 @@ function renderChart(data) {
   });
 }
 
-
-  const min = Math.min(...closes);
-  const max = Math.max(...closes);
-
-  // ✅ Prevent “flatness” even when range is tiny
-  const rawRange = max - min;
-  const range = rawRange > 0 ? rawRange : Math.max(Math.abs(min) * 0.02, 1); // 2% of price or $1
-  const padding = range * 0.15;
-
-  const denom = range + padding * 2;
-
-  // Build points
-  const points = closes.map((p, i) => {
-    const x = (i / (closes.length - 1)) * width;
-    const y = height - ((p - (min - padding)) / denom) * height;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-
-  const lastXY = points[points.length - 1].split(",");
-  const lastX = Number(lastXY[0]);
-  const lastY = Number(lastXY[1]);
-
-  chartEl.innerHTML = `
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 ${width} ${height}"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"></stop>
-          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"></stop>
-        </linearGradient>
-      </defs>
-
-      <!-- Area fill -->
-      <polygon
-        points="0,${height} ${points.join(" ")} ${width},${height}"
-        fill="url(#fillGrad)"
-      ></polygon>
-
-      <!-- Line -->
-      <polyline
-        points="${points.join(" ")}"
-        fill="none"
-        stroke="#4c8dff"
-        stroke-width="2.5"
-        stroke-linejoin="round"
-        stroke-linecap="round"
-      ></polyline>
-
-      <!-- Last point -->
-      <circle cx="${lastX}" cy="${lastY}" r="4.5" fill="#2ecc71"></circle>
-    </svg>
-  `;
-}
-
 /* =========================
    Load Data
    ========================= */

@@ -2,33 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Valyxis · Stock Detail</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <title>Valyxis · Stock</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
 <div class="chart-page">
 
-  <!-- ===== STOCK HEADER ===== -->
+  <!-- ===== HEADER ===== -->
   <div class="stock-header">
     <div class="stock-title">
-      <h1 id="ticker">NVDA</h1>
+      <h1 id="ticker">—</h1>
       <div class="stock-meta">
-        <span id="company">NVIDIA Corporation</span>
+        <span id="company">—</span>
         <span class="dot">•</span>
-        <span id="sector">Technology</span>
+        <span id="sector">—</span>
       </div>
     </div>
 
     <div class="stock-price">
-      <div class="price" id="price">$187.28</div>
-      <div class="change positive" id="change">+1.42 (0.51%)</div>
+      <div class="price" id="price">—</div>
+      <div class="change" id="change">—</div>
     </div>
   </div>
 
-  <!-- ===== CHART SECTION ===== -->
+  <!-- ===== CHART ===== -->
   <div class="chart-section">
     <div class="chart-controls">
       <button class="tf active" data-range="1y">1Y</button>
@@ -44,10 +43,10 @@
     </div>
   </div>
 
-  <!-- ===== STATS GRID ===== -->
+  <!-- ===== STATS ===== -->
   <div class="stats-grid">
     <div><span>Previous Close</span><strong id="prevClose">—</strong></div>
-    <div><span>52W Range</span><strong id="range52w">—</strong></div>
+    <div><span>52W High</span><strong id="high52w">—</strong></div>
     <div><span>P/E</span><strong id="pe">—</strong></div>
     <div><span>PEG</span><strong id="peg">—</strong></div>
     <div><span>EPS</span><strong id="eps">—</strong></div>
@@ -56,8 +55,6 @@
 
 </div>
 
-<script src="chart.js"></script>
+<script src="stock.js"></script>
 </body>
-
 </html>
-

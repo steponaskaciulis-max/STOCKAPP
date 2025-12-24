@@ -211,22 +211,23 @@ async function loadStock(period = "1y") {
     setText(epsEl, fmt(meta.eps));
 
 if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
-  let raw = Number(meta.dividendYieldPct);
+  const raw = Number(meta.dividendYieldPct);
 
-  // Case 1: backend already sent percent like 75
-  if (raw > 10) {
-    raw = raw / 100;
-  }
+  /*
+    BACKEND REALITY CHECK:
+    - Backend already multiplied by 100
+    - So:
+        75   → 0.75%
+        2    → 0.02%
+        0.6  → 0.006%
+  */
 
-  // Now raw is guaranteed to be 0–1 range
-  const percent = raw * 100;
+  const percent = raw / 100;
 
   setText(divEl, `${fmt(percent, 2)}%`);
 } else {
   setText(divEl, "—");
 }
-
-
 
     // Render chart
     renderChart(prices);

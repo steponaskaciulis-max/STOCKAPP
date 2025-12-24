@@ -2,12 +2,14 @@ const API = "https://stockapp-kym2.onrender.com";
 
 /* ================= STORAGE ================= */
 
+const STORE_KEY = "valyxis";
+
 function getStore() {
-  return JSON.parse(localStorage.getItem("stockWatcher")) || { watchlists: {} };
+  return JSON.parse(localStorage.getItem(STORE_KEY)) || { watchlists: {} };
 }
 
 function saveStore(store) {
-  localStorage.setItem("stockWatcher", JSON.stringify(store));
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
 }
 
 /* ================= DASHBOARD ================= */
@@ -20,24 +22,24 @@ function renderWatchlists() {
   const names = Object.keys(store.watchlists);
 
   if (names.length === 0) {
-    el.innerHTML = "<p>No watchlists yet.</p>";
+    el.innerHTML = "<p style='color:#888'>No watchlists yet.</p>";
     return;
   }
 
   el.innerHTML = names
     .map(
       (name) => `
-    <div class="watchlist-card" onclick="openWatchlist('${name.replace(/'/g, "\\'")}')">
-      <h3>${name}</h3>
-      <p>${store.watchlists[name].length} stocks</p>
-    </div>
-  `
+      <div class="watchlist-card" onclick="openWatchlist('${name.replace(/'/g, "\\'")}')">
+        <h3>${name}</h3>
+        <p>${store.watchlists[name].length} stocks</p>
+      </div>
+    `
     )
     .join("");
 }
 
 function createWatchlist() {
-  const name = prompt("Watchlist name:");
+  const name = prompt("New watchlist name:");
   if (!name) return;
 
   const store = getStore();
@@ -71,17 +73,19 @@ async function loadWatchlistView() {
   const input = document.getElementById("tickers");
   if (input) input.value = tickers.join(" ");
 
+  const tableEl = document.getElementById("table");
+
   if (tickers.length === 0) {
-    const tableEl = document.getElementById("table");
-    if (tableEl) tableEl.innerHTML = "<p style='color:#888'>No tickers yet. Add some above and click 💾.</p>";
+    tableEl.innerHTML =
+      "<p style='color:#888'>No tickers yet. Add some above and click 💾 Save.</p>";
     return;
   }
 
   const qs = tickers.map((t) => `tickers=${encodeURIComponent(t)}`).join("&");
   const r = await fetch(`${API}/metrics?${qs}`);
-  const data = (await r.json()).data;
+  const json = await r.json();
 
-  renderTable(data);
+  renderTable(json.data || []);
 
   const updated = document.getElementById("updated");
   if (updated) updated.innerText = "Updated: " + new Date().toLocaleTimeString();
@@ -146,7 +150,7 @@ function sparkline(values, width = 90, height = 24) {
   `;
 }
 
-/* ================= TABLE (FULL DATA + SPARK) ================= */
+/* ================= TABLE ================= */
 
 function renderTable(data) {
   let html = `
@@ -157,17 +161,14 @@ function renderTable(data) {
           <th>Company</th>
           <th>Spark</th>
           <th>Sector</th>
-
           <th>Price</th>
           <th>1D %</th>
           <th>1W %</th>
           <th>1M %</th>
-
           <th>P/E</th>
           <th>PEG</th>
           <th>EPS</th>
           <th>Div %</th>
-
           <th>52W High</th>
           <th>Δ from 52W</th>
         </tr>
@@ -208,4 +209,10 @@ function renderTable(data) {
 window.addEventListener("load", () => {
   renderWatchlists();
   loadWatchlistView();
+
+  const saveBtn = document.getElementById("saveWatchlist");
+  if (saveBtn) saveBtn.onclick = updateWatchlist;
+
+  const createBtn = document.getElementById("createWatchlist");
+  if (createBtn) createBtn.onclick = createWatchlist;
 });

@@ -1,86 +1,113 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Valyxis · Stock</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Valyxis — Stock</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
+  <body>
+    <!-- Top Nav -->
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <div class="brand-logo">
+          <img src="assets/valyxis-logo.png" alt="Valyxis" />
+        </div>
+        <div class="brand-name">Valyxis</div>
+      </a>
 
-<div class="chart-page">
+      <nav class="topnav">
+        <a href="dashboard.html">Dashboard</a>
+      </nav>
+    </header>
 
-  <!-- ===== HEADER ===== -->
-  <div class="stock-header">
-    <div class="stock-title">
-      <h1 id="ticker">—</h1>
-      <div class="stock-meta">
-        <span id="company">—</span>
-        <span class="dot">•</span>
-        <span id="sector">—</span>
-      </div>
-    </div>
+    <!-- Page Container -->
+    <main class="page">
+      <!-- Stock Header Row -->
+      <section class="stock-hero">
+        <div class="stock-left">
+          <!-- Big ticker -->
+          <h1 id="ticker" class="ticker-title">—</h1>
 
-    <div class="stock-price">
-      <div class="price" id="price">—</div>
-      <div class="change" id="change">—</div>
-    </div>
-  </div>
+          <!-- Company name + sector UNDER ticker -->
+          <div class="company-meta">
+            <span id="company-name">—</span>
+            <span class="dot">•</span>
+            <span id="company-sector">—</span>
+          </div>
+        </div>
 
-  <!-- ===== CHART ===== -->
-  <div class="chart-section">
-    <div class="chart-controls">
-      <button class="tf active" data-range="1y">1Y</button>
-      <button class="tf" data-range="6m">6M</button>
-      <button class="tf" data-range="3m">3M</button>
-      <button class="tf" data-range="1m">1M</button>
-      <button class="tf" data-range="5d">5D</button>
-      <button class="tf" data-range="1d">1D</button>
-    </div>
+        <!-- Price box (top-right) -->
+        <div class="stock-right">
+          <div id="price" class="hero-price">$—</div>
+          <div id="change" class="hero-change">—</div>
+        </div>
+      </section>
 
-    <div class="chart-container">
-      <div id="chart"></div>
-    </div>
-  </div>
+      <!-- Divider -->
+      <div class="rule"></div>
 
-  <!-- ===== STATS ===== -->
- <div class="stats-grid">
+      <!-- Timeframes -->
+      <section class="timeframe-row">
+        <button class="tf-btn active" data-period="1y">1Y</button>
+        <button class="tf-btn" data-period="6m">6M</button>
+        <button class="tf-btn" data-period="3m">3M</button>
+        <button class="tf-btn" data-period="1m">1M</button>
+        <button class="tf-btn" data-period="5d">5D</button>
+        <button class="tf-btn" data-period="1d">1D</button>
+      </section>
 
-  <div class="stat">
-    <span class="label">Previous Close</span>
-    <span class="value" id="prev-close">—</span>
-  </div>
+      <!-- Chart Area -->
+      <section class="chart-wrap">
+        <div class="chart-shell">
+          <!-- IMPORTANT: chart container ID must be "chart" -->
+          <div id="chart" class="chart-area"></div>
+        </div>
+      </section>
 
-  <div class="stat">
-    <span class="label">52W High</span>
-    <span class="value" id="high-52">—</span>
-  </div>
+      <!-- Stats Grid (ALL fields included) -->
+      <section class="stats-grid">
+        <div class="stat">
+          <div class="label">Previous Close</div>
+          <div class="value" id="prev-close">—</div>
+        </div>
 
-  <div class="stat">
-    <span class="label">P/E</span>
-    <span class="value" id="pe">—</span>
-  </div>
+        <div class="stat">
+          <div class="label">52W High</div>
+          <div class="value" id="high-52">—</div>
+        </div>
 
-  <div class="stat">
-    <span class="label">PEG</span>
-    <span class="value" id="peg">—</span>
-  </div>
+        <div class="stat">
+          <div class="label">P/E</div>
+          <div class="value" id="pe">—</div>
+        </div>
 
-  <div class="stat">
-    <span class="label">EPS</span>
-    <span class="value" id="eps">—</span>
-  </div>
+        <div class="stat">
+          <div class="label">PEG</div>
+          <div class="value" id="peg">—</div>
+        </div>
 
-  <div class="stat">
-    <span class="label">Dividend</span>
-    <span class="value" id="dividend">—</span>
-  </div>
+        <div class="stat">
+          <div class="label">EPS</div>
+          <div class="value" id="eps">—</div>
+        </div>
 
-</div>
+        <div class="stat">
+          <div class="label">Dividend</div>
+          <div class="value" id="dividend">—</div>
+        </div>
+      </section>
+    </main>
 
-<script src="stock.js"></script>
-</body>
+    <!-- Script -->
+    <script src="stock.js"></script>
+    <script>
+      // Ensure ticker in the header is always set visually
+      // (doesn't change your logic — just displays the URL ticker immediately)
+      const p = new URLSearchParams(window.location.search);
+      const t = (p.get("ticker") || "").toUpperCase();
+      if (t) document.getElementById("ticker").textContent = t;
+    </script>
+  </body>
 </html>
-<script>
-  window.VALYXIS_API_BASE = "https://stockapp-kym2.onrender.com";
-</script>

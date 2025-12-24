@@ -1,137 +1,152 @@
-const API = "https://stockapp-kym2.onrender.com";
+/* =========================
+   Valyxis — Stock Chart Page
+   ========================= */
 
-/* ================= HELPERS ================= */
+const params = new URLSearchParams(window.location.search);
+const TICKER = (params.get("ticker") || "").toUpperCase();
+const API_BASE = "";
 
-function $(id) {
-  return document.getElementById(id);
+// DOM
+const chartEl = document.getElementById("chart");
+const priceEl = document.getElementById("price");
+const changeEl = document.getElementById("change");
+const nameEl = document.getElementById("company-name");
+const sectorEl = document.getElementById("company-sector");
+
+const prevCloseEl = document.getElementById("prev-close");
+const high52El = document.getElementById("high-52");
+const peEl = document.getElementById("pe");
+const pegEl = document.getElementById("peg");
+const epsEl = document.getElementById("eps");
+const divEl = document.getElementById("dividend");
+
+let lastChartData = [];
+
+/* =========================
+   Helpers
+   ========================= */
+
+function fmt(n, d = 2) {
+  return n == null || isNaN(n) ? "—" : Number(n).toFixed(d);
 }
 
-function getTicker() {
-  const t = new URLSearchParams(window.location.search).get("ticker");
-  console.log("Ticker from URL:", t);
-  return t;
+function colorize(el, val) {
+  if (val > 0) el.style.color = "#2ecc71";
+  else if (val < 0) el.style.color = "#e74c3c";
+  else el.style.color = "#aaa";
 }
 
-function fmt(x, d = 2) {
-  if (x === null || x === undefined || isNaN(x)) return "—";
-  return Number(x).toFixed(d);
-}
+/* =========================
+   Chart (SVG)
+   ========================= */
 
-function cls(x) {
-  if (x === null || x === undefined) return "";
-  return x >= 0 ? "positive" : "negative";
-}
-
-/* ================= CHART ================= */
-
-function drawChart(container, prices) {
-  console.log("Drawing chart with", prices?.length, "points");
-
-  container.innerHTML = "";
-
-  if (!prices || prices.length < 2) {
-    container.innerHTML = "<div style='color:#888'>No chart data</div>";
+function renderChart(data) {
+  if (!data || data.length < 2) {
+    chartEl.innerHTML = "";
     return;
   }
 
-  const w = container.offsetWidth || 900;
-  const h = container.offsetHeight || 420;
-  const pad = 40;
+  lastChartData = data;
 
-  const values = prices.map(p => p.close);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const w = chartEl.clientWidth;
+  const h = chartEl.clientHeight;
 
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", w);
-  svg.setAttribute("height", h);
+  const prices = data.map(d => d.close);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const pad = 0.1 * (max - min || 1);
 
-  const x = i => pad + (i / (prices.length - 1)) * (w - pad * 2);
-  const y = v => h - pad - ((v - min) / (max - min)) * (h - pad * 2);
+  const pts = prices.map((p, i) => {
+    const x = (i / (prices.length - 1)) * w;
+    const y = h - ((p - (min - pad)) / ((max - min) + pad * 2)) * h;
+    return `${x},${y}`;
+  }).join(" ");
 
-  let d = "";
-  prices.forEach((p, i) => {
-    d += (i === 0 ? "M" : "L") + `${x(i)},${y(p.close)} `;
-  });
-
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", d);
-  path.setAttribute("stroke", "#4f8cff");
-  path.setAttribute("stroke-width", "2");
-  path.setAttribute("fill", "none");
-
-  svg.appendChild(path);
-  container.appendChild(svg);
+  chartEl.innerHTML = `
+    <svg width="${w}" height="${h}">
+      <polyline
+        points="${pts}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="2"
+      />
+      <circle
+        cx="${w}"
+        cy="${pts.split(" ").pop().split(",")[1]}"
+        r="4"
+        fill="#2ecc71"
+      />
+    </svg>
+  `;
 }
 
-/* ================= LOAD ================= */
+/* =========================
+   Load Data
+   ========================= */
 
 async function loadStock(period = "1y") {
-  const ticker = getTicker();
-  if (!ticker) {
-    console.error("No ticker in URL");
-    return;
+  const res = await fetch(
+    `${API_BASE}/history?ticker=${TICKER}&period=${period}`
+  );
+  const json = await res.json();
+
+  const { meta, prices } = json;
+
+  // Header
+  nameEl.textContent = meta.longName || TICKER;
+  sectorEl.textContent = meta.sector || "—";
+
+  priceEl.textContent = meta.price ? `$${fmt(meta.price)}` : "$—";
+
+  // Change
+  if (prices.length >= 2) {
+    const diff = prices.at(-1).close - prices.at(-2).close;
+    const pct = (diff / prices.at(-2).close) * 100;
+    changeEl.textContent = `${fmt(diff)} (${fmt(pct)}%)`;
+    colorize(changeEl, diff);
+  } else {
+    changeEl.textContent = "—";
   }
 
-  const url = `${API}/history?ticker=${encodeURIComponent(ticker)}&period=${period}`;
-  console.log("Fetching:", url);
+  // Stats (NO DOUBLE MULTIPLY)
+  prevCloseEl.textContent =
+    prices.length ? fmt(prices.at(-2)?.close) : "—";
 
-  const res = await fetch(url);
-  const data = await res.json();
+  high52El.textContent = fmt(meta.high52w);
+  peEl.textContent = fmt(meta.pe);
+  pegEl.textContent = fmt(meta.peg);
+  epsEl.textContent = fmt(meta.eps);
 
-  console.log("API response:", data);
+  // 🔥 FIXED DIVIDEND (already % from backend)
+  divEl.textContent =
+    meta.dividendYieldPct != null
+      ? fmt(meta.dividendYieldPct) + "%"
+      : "—";
 
-  window.__lastChartData = data.prices;
-
-  if (!data || !data.meta) {
-    console.error("Invalid API response");
-    return;
-  }
-
-  $("ticker").textContent = ticker.toUpperCase();
-  $("company").textContent = data.meta.longName || "—";
-  $("sector").textContent = data.meta.sector || "—";
-
-  $("price").textContent =
-    data.meta.price ? `$${fmt(data.meta.price)}` : "—";
-
-  if (data.prices && data.prices.length >= 2) {
-    const prev = data.prices.at(-2).close;
-    const last = data.prices.at(-1).close;
-    const delta = last - prev;
-    const pct = (delta / prev) * 100;
-
-    $("change").textContent = `${fmt(delta)} (${fmt(pct)}%)`;
-    $("change").className = cls(delta);
-    $("prevClose").textContent = fmt(prev);
-  }
-
-  $("high52w").textContent = fmt(data.meta.high52w);
-  $("pe").textContent = fmt(data.meta.pe);
-  $("peg").textContent = fmt(data.meta.peg);
-  $("eps").textContent = fmt(data.meta.eps);
-
-  dividendEl.textContent =
-  meta.dividendYieldPct != null
-    ? Number(meta.dividendYieldPct).toFixed(2) + "%"
-    : "—";
-e
-  setTimeout(() => {
-    drawChart($("chart"), data.prices);
-  }, 100);
+  renderChart(prices);
 }
 
-/* ================= INIT ================= */
+/* =========================
+   Timeframe Buttons
+   ========================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM ready — loading stock");
-  loadStock("1y");
+document.querySelectorAll("[data-period]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll("[data-period]")
+      .forEach(b => b.classList.remove("active"));
 
-  document.querySelectorAll(".tf").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tf").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      loadStock(btn.dataset.range);
-    });
+    btn.classList.add("active");
+    loadStock(btn.dataset.period);
   });
 });
+
+/* =========================
+   Init
+   ========================= */
+
+if (!TICKER) {
+  alert("No ticker provided");
+} else {
+  loadStock("1y");
+}

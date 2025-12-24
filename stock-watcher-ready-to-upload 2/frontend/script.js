@@ -25,25 +25,17 @@ function sparkline(values, width = 90, height = 24) {
   const max = Math.max(...values);
   const range = max - min || 1;
 
-  const pts = values
-    .map((v, i) => {
-      const x = (i / (values.length - 1)) * width;
-      const y = height - ((v - min) / range) * height;
-      return `${x},${y}`;
-    })
-    .join(" ");
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(" ");
 
-  const trendUp = values.at(-1) >= values[0];
-  const color = trendUp ? "#3ddc84" : "#ff6b6b";
+  const color = values.at(-1) >= values[0] ? "#3ddc84" : "#ff6b6b";
 
   return `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <polyline
-        fill="none"
-        stroke="${color}"
-        stroke-width="1.5"
-        points="${pts}"
-      />
+    <svg width="${width}" height="${height}">
+      <polyline fill="none" stroke="${color}" stroke-width="1.5" points="${pts}" />
     </svg>
   `;
 }
@@ -51,25 +43,17 @@ function sparkline(values, width = 90, height = 24) {
 /* ---------- sorting ---------- */
 
 function sortBy(key) {
-  if (sortKey === key) {
-    sortAsc = !sortAsc;
-  } else {
-    sortKey = key;
-    sortAsc = true;
-  }
+  sortAsc = sortKey === key ? !sortAsc : true;
+  sortKey = key;
 
   currentData.sort((a, b) => {
     const x = a[key];
     const y = b[key];
-
     if (x == null) return 1;
     if (y == null) return -1;
-
-    if (typeof x === "string") {
-      return sortAsc ? x.localeCompare(y) : y.localeCompare(x);
-    }
-
-    return sortAsc ? x - y : y - x;
+    return typeof x === "string"
+      ? sortAsc ? x.localeCompare(y) : y.localeCompare(x)
+      : sortAsc ? x - y : y - x;
   });
 
   renderTable();
@@ -83,6 +67,7 @@ function renderTable() {
       <thead>
         <tr>
           <th onclick="sortBy('ticker')">Ticker</th>
+          <th onclick="sortBy('company')">Company</th>
           <th>Spark</th>
           <th onclick="sortBy('sector')">Sector</th>
 
@@ -105,7 +90,8 @@ function renderTable() {
   currentData.forEach(s => {
     html += `
       <tr>
-        <td>${s.ticker}</td>
+        <td><strong>${s.ticker}</strong></td>
+        <td>${s.company || "—"}</td>
         <td>${sparkline(s.spark)}</td>
         <td>${s.sector || "—"}</td>
 
@@ -124,15 +110,11 @@ function renderTable() {
     `;
   });
 
-  html += `
-      </tbody>
-    </table>
-  `;
-
+  html += "</tbody></table>";
   document.getElementById("table").innerHTML = html;
 }
 
-/* ---------- data loading ---------- */
+/* ---------- load ---------- */
 
 async function load() {
   const input = document.getElementById("tickers");
@@ -143,28 +125,18 @@ async function load() {
   const tickers = input.value.trim().split(/\s+/).filter(Boolean);
   if (!tickers.length) return;
 
-  // UI loading state
   btn.disabled = true;
   icon.classList.add("hidden");
   spinner.classList.remove("hidden");
 
   try {
     const qs = tickers.map(t => `tickers=${t}`).join("&");
-    const res = await fetch(`${API}/metrics?${qs}`);
-    const json = await res.json();
-
-    currentData = json.data;
+    const r = await fetch(`${API}/metrics?${qs}`);
+    currentData = (await r.json()).data;
     sortKey = null;
-    sortAsc = true;
-
     renderTable();
-
-    const updated = document.getElementById("updated");
-    if (updated) {
-      updated.innerText = "Updated: " + new Date().toLocaleTimeString();
-    }
-  } catch (e) {
-    alert("Failed to load data");
+    document.getElementById("updated").innerText =
+      "Updated: " + new Date().toLocaleTimeString();
   } finally {
     btn.disabled = false;
     spinner.classList.add("hidden");
@@ -172,42 +144,25 @@ async function load() {
   }
 }
 
-/* ---------- watchlists ---------- */
+/* ---------- watchlist + keyboard ---------- */
 
 function saveWatchlist() {
-  const tickers = document.getElementById("tickers").value.trim();
-  if (!tickers) {
-    alert("Nothing to save");
-    return;
-  }
-  localStorage.setItem("stockWatcherWatchlist", tickers);
+  localStorage.setItem(
+    "stockWatcherWatchlist",
+    document.getElementById("tickers").value.trim()
+  );
   alert("Watchlist saved");
 }
 
 function loadWatchlist() {
-  const saved = localStorage.getItem("stockWatcherWatchlist");
-  if (!saved) {
-    alert("No saved watchlist");
-    return;
-  }
-  document.getElementById("tickers").value = saved;
+  const v = localStorage.getItem("stockWatcherWatchlist");
+  if (!v) return alert("No watchlist");
+  document.getElementById("tickers").value = v;
   load();
 }
 
-/* ---------- keyboard + auto-load ---------- */
-
 window.addEventListener("load", () => {
-  const input = document.getElementById("tickers");
-
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      load();
-    }
+  document.getElementById("tickers").addEventListener("keydown", e => {
+    if (e.key === "Enter") load();
   });
-
-  const saved = localStorage.getItem("stockWatcherWatchlist");
-  if (saved) {
-    input.value = saved;
-    load();
-  }
 });

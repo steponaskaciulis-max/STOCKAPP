@@ -177,28 +177,45 @@ function renderTable(data) {
   `;
 
   data.forEach((s) => {
-    html += `
-      <tr>
-        <td><strong>${s.ticker}</strong></td>
-        <td>${s.company || "—"}</td>
-        <td>${sparkline(s.spark)}</td>
-        <td>${s.sector || "—"}</td>
+  html += `
+    <tr>
+      <td class="ticker sticky">${s.ticker}</td>
+      <td class="company sticky">${s.company || "—"}</td>
 
-        <td>${fmt(s.price)}</td>
-        <td class="${cls(s.dailyChangePct)}">${fmt(s.dailyChangePct)}%</td>
-        <td class="${cls(s.weeklyChangePct)}">${fmt(s.weeklyChangePct)}%</td>
-        <td class="${cls(s.monthlyChangePct)}">${fmt(s.monthlyChangePct)}%</td>
+      <td>${sparkline(s.spark)}</td>
 
-        <td>${fmt(s.pe)}</td>
-        <td>${fmt(s.peg)}</td>
-        <td>${fmt(s.eps)}</td>
-        <td>${fmt(s.dividendYieldPct)}%</td>
+      <td class="muted">${s.sector || "—"}</td>
 
-        <td>${fmt(s.high52w)}</td>
-        <td class="${cls(s.pctFrom52wHigh)}">${fmt(s.pctFrom52wHigh)}%</td>
-      </tr>
-    `;
-  });
+      <td class="price">${fmt(s.price)}</td>
+
+      <td class="${cls(s.dailyChangePct)}">
+        ${fmt(s.dailyChangePct)}%
+      </td>
+
+      <td class="${cls(s.weeklyChangePct)}">
+        ${fmt(s.weeklyChangePct)}%
+      </td>
+
+      <td class="${cls(s.monthlyChangePct)}">
+        ${fmt(s.monthlyChangePct)}%
+      </td>
+
+      <td class="muted">${fmt(s.pe)}</td>
+      <td class="muted">${fmt(s.peg)}</td>
+      <td class="muted">${fmt(s.eps)}</td>
+
+      <td class="muted">
+        ${fmt(s.dividendYieldPct)}%
+      </td>
+
+      <td class="muted">${fmt(s.high52w)}</td>
+
+      <td class="${cls(s.pctFrom52wHigh)}">
+        ${fmt(s.pctFrom52wHigh)}%
+      </td>
+    </tr>
+  `;
+});
 
   html += "</tbody></table>";
   document.getElementById("table").innerHTML = html;

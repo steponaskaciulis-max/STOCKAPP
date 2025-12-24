@@ -23,3 +23,29 @@ def root():
         "message": "Stock Watcher API is running",
         "endpoint": "/metrics"
     }
+@app.get("/history")
+def history(ticker: str, period: str = "1y"):
+    tk = yf.Ticker(ticker)
+    hist = tk.history(period=period, interval="1d")
+
+    prices = [
+        {"date": str(d.date()), "close": float(c)}
+        for d, c in zip(hist.index, hist["Close"])
+    ]
+
+    info = tk.info or {}
+
+    return {
+        "meta": {
+            "longName": info.get("longName"),
+            "sector": info.get("sector"),
+            "price": info.get("regularMarketPrice"),
+            "pe": info.get("trailingPE"),
+            "peg": info.get("pegRatio"),
+            "eps": info.get("trailingEps"),
+            "div": (info.get("dividendYield") or 0) * 100,
+            "high52w": info.get("fiftyTwoWeekHigh"),
+            "dd": None
+        },
+        "prices": prices
+    }

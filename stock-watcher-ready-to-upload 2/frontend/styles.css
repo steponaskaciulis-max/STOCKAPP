@@ -2,17 +2,10 @@
    RESET & BASE
 ========================================================= */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
 
-html, body {
-  height: 100%;
-}
-
-body {
+body{
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
                Roboto, Helvetica, Arial, sans-serif;
   background: #0b0b0f;
@@ -20,22 +13,29 @@ body {
   line-height: 1.4;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; }
+input { font-family: inherit; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
+:root{
+  --bg: #0b0b0f;
+  --panel: #151520;
+  --panel2: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.06);
+  --muted: #9ca3af;
+  --text: #e5e7eb;
+  --pos: #22c55e;
+  --neg: #ef4444;
+  --blue: #3b82f6;
+  --blue2: #2563eb;
 }
 
 /* =========================================================
-   NAVIGATION
+   NAV
 ========================================================= */
 
-.nav {
+.nav{
   height: 72px;
   padding: 0 28px;
   display: flex;
@@ -43,31 +43,48 @@ button {
   justify-content: space-between;
 }
 
-.brand {
+.brand{
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.logo-text {
+.logo-text{
   font-weight: 700;
   font-size: 18px;
+  letter-spacing: -0.01em;
 }
 
-.nav-link {
-  color: #9ca3af;
+.nav-link{
+  color: var(--muted);
   font-size: 14px;
 }
 
-.nav-link:hover {
-  color: #ffffff;
+.nav-link:hover{
+  color: #fff;
+}
+
+.nav-links{
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-links a{
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+  color: #fff;
 }
 
 /* =========================================================
-   LOGO SYSTEM (USED EVERYWHERE)
+   LOGO BADGE (USED EVERYWHERE)
 ========================================================= */
 
-.logo-badge {
+.logo-badge{
   width: 40px;
   height: 40px;
   border-radius: 12px;
@@ -75,7 +92,6 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-
   box-shadow:
     0 0 0 1px rgba(59,130,246,0.25),
     0 8px 20px rgba(59,130,246,0.18),
@@ -83,120 +99,142 @@ button {
     inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
-.logo-badge img {
+.logo-badge img{
   width: 22px;
   height: 22px;
   object-fit: contain;
 }
 
-/* Larger badge for hero */
-.hero-logo {
-  width: 64px;
-  height: 64px;
-}
-
-.hero-logo img {
-  width: 34px;
-  height: 34px;
-}
-
 /* =========================================================
-   HOMEPAGE / HERO
+   HOMEPAGE HERO (FIXED LAYOUT)
 ========================================================= */
 
-body.home {
+body.home{
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.hero {
+.hero{
   position: relative;
   min-height: calc(100vh - 72px);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
+  place-items: center;
+  padding: 40px 20px 80px;
   overflow: hidden;
 }
 
-.hero-glow {
+.hero-glow{
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 700px;
+  height: 700px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
   background: radial-gradient(
     circle,
     rgba(59,130,246,0.18) 0%,
     rgba(59,130,246,0.08) 30%,
     rgba(0,0,0,0) 70%
   );
-  filter: blur(80px);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -55%);
+  filter: blur(90px);
   pointer-events: none;
 }
 
-.hero-content {
+.hero-content{
   position: relative;
   z-index: 2;
-
   display: flex;
   flex-direction: column;
   align-items: center;
-
   text-align: center;
-  max-width: 520px;
-  padding: 0 20px;
-
-  gap: 20px;
+  max-width: 720px;
+  gap: 18px;
 }
 
-.hero-content h1 {
-  font-size: 44px;
-  margin: 22px 0 12px;
-  letter-spacing: -0.02em;
+.hero-title{
+  font-size: 48px;
+  letter-spacing: -0.03em;
 }
 
-.tagline {
+.hero-subtitle{
   font-size: 18px;
-  color: #9ca3af;
+  color: var(--muted);
   line-height: 1.55;
-  margin-bottom: 34px;
 }
 
 /* =========================================================
-   CTA BUTTON
+   BUTTONS
 ========================================================= */
 
-.cta {
+.cta{
   display: inline-block;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
   border-radius: 14px;
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
   font-size: 15px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.cta:hover {
+.cta:hover{
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(59,130,246,0.35);
 }
 
+button{
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+button:hover{
+  box-shadow: 0 10px 24px rgba(59,130,246,0.25);
+  transform: translateY(-1px);
+}
+
+/* small icon button (like your 💾 / 🔍) */
+.icon-btn{
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--blue), var(--blue2));
+  color: white;
+  font-size: 18px;
+  padding: 0;
+}
+
+/* spinner helper (if used) */
+.hidden { display: none !important; }
+.spinner{
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: rgba(255,255,255,1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* =========================================================
-   FEATURE PILLS
+   FEATURE PILLS (HOMEPAGE)
 ========================================================= */
 
-.feature-pills {
-  margin-top: 38px;
+.feature-pills{
+  margin-top: 14px;
   display: flex;
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.feature-pills span {
+.feature-pills span{
   padding: 8px 14px;
   border-radius: 999px;
   background: rgba(255,255,255,0.05);
@@ -206,140 +244,189 @@ body.home {
 }
 
 /* =========================================================
-   DASHBOARD LAYOUT
+   TOPBAR / PAGE HEADERS (dashboard + watchlist)
 ========================================================= */
 
-.dashboard {
-  padding: 28px;
-}
-
-.dashboard-header {
+.topbar{
+  padding: 10px 28px 0;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 22px;
+  gap: 16px;
 }
 
-.dashboard-title {
+.topbar h1{
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-/* =========================================================
-   WATCHLIST INPUT
-========================================================= */
-
-.watchlist-input {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.watchlist-input input {
-  flex: 1;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #ffffff;
-  border: none;
+.topbar p{
+  margin-top: 6px;
+  color: var(--muted);
   font-size: 14px;
 }
 
-.icon-button {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  font-size: 18px;
+#updated{
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* =========================================================
+   WATCHLIST DASHBOARD CARDS
+========================================================= */
+
+.watchlists{
+  padding: 22px 28px 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.watchlist-card{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.watchlist-card:hover{
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+}
+
+.watchlist-card h3{
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.watchlist-card p{
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =========================================================
+   CONTROLS (watchlist page)
+========================================================= */
+
+.controls{
+  padding: 16px 28px 18px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.controls input{
+  flex: 1;
+  min-width: 260px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  outline: none;
+}
+
+.controls input::placeholder{
+  color: rgba(255,255,255,0.45);
+}
+
+/* =========================================================
+   TABLE WRAPPER (makes it feel like a real app)
+========================================================= */
+
+#table{
+  padding: 0 28px 40px;
+}
+
+/* container around table for “panel” feel */
+.table-card{
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  overflow: hidden;
 }
 
 /* =========================================================
    TABLE (SPREADSHEET STYLE)
 ========================================================= */
 
-table {
+table{
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-thead {
+thead{
   background: linear-gradient(180deg, #111827, #0b0b0f);
 }
 
-th {
+th{
   text-align: left;
   padding: 14px 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: #d1d5db;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   white-space: nowrap;
 }
 
-td {
+td{
   padding: 14px 12px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   white-space: nowrap;
+  vertical-align: middle;
 }
 
-tbody tr:hover {
+tbody tr:hover{
   background: rgba(255,255,255,0.03);
+}
+
+/* nice emphasis for ticker */
+td strong{
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 /* =========================================================
    NUMERIC COLORS
 ========================================================= */
 
-.pos {
-  color: #22c55e;
-  font-weight: 500;
-}
-
-.neg {
-  color: #ef4444;
-  font-weight: 500;
-}
-
-.muted {
-  color: #9ca3af;
-}
+.pos{ color: var(--pos); font-weight: 600; }
+.neg{ color: var(--neg); font-weight: 600; }
+.muted{ color: var(--muted); }
 
 /* =========================================================
-   SPARKLINE
+   SPARKLINES (your table renders <svg> directly)
 ========================================================= */
 
-.spark {
-  width: 90px;
-  height: 26px;
+/* make any svg in the spark column align nicely */
+td svg{
+  display: block;
 }
 
-.spark path {
-  fill: none;
-  stroke-width: 1.8;
-}
-
-.spark.pos path {
-  stroke: #22c55e;
-}
-
-.spark.neg path {
-  stroke: #ef4444;
+td svg polyline{
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
 
-@media (max-width: 900px) {
-  table {
-    font-size: 13px;
-  }
+@media (max-width: 900px){
+  .nav{ padding: 0 16px; }
+  .topbar{ padding: 10px 16px 0; }
+  .controls{ padding: 16px; }
+  #table{ padding: 0 16px 40px; }
 
-  th, td {
-    padding: 12px 10px;
-  }
+  .hero-title{ font-size: 38px; }
+  .hero-subtitle{ font-size: 16px; }
 
-  .hero-content h1 {
-    font-size: 36px;
-  }
+  table{ font-size: 13px; }
+  th, td{ padding: 12px 10px; }
 }

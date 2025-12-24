@@ -771,3 +771,29 @@ img {
   width: 100%;
   position: relative;
 }
+/* ===== FIX FLAT CHART ===== */
+
+.chart-wrap {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.chart-shell {
+  width: 100%;
+  height: 420px;              /* 🔑 FORCE REAL HEIGHT */
+  background: linear-gradient(
+    135deg,
+    #0b1220,
+    #0b1220 40%,
+    #0d1628
+  );
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+.chart-area {
+  width: 100%;
+  height: 100%;               /* 🔑 MUST FILL SHELL */
+  position: relative;
+}

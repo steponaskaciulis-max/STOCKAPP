@@ -4,7 +4,10 @@
 
 const params = new URLSearchParams(window.location.search);
 const TICKER = (params.get("ticker") || "").toUpperCase();
-const API_BASE = ""; // same-origin
+const API_BASE =
+  window.VALYXIS_API_BASE ||
+  "https://stockapp-kym2.onrender.com";
+
 
 /* =========================
    DOM ELEMENTS

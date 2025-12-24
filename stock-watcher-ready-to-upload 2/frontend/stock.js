@@ -2,8 +2,8 @@ const API_BASE = "https://stockapp-kym2.onrender.com";
 
 /* ================= UTILS ================= */
 
-function qs(name) {
-  return new URLSearchParams(window.location.search).get(name);
+function getTicker() {
+  return new URLSearchParams(window.location.search).get("ticker");
 }
 
 function fmt(x, d = 2) {
@@ -16,7 +16,7 @@ function cls(x) {
   return x >= 0 ? "positive" : "negative";
 }
 
-/* ================= SVG CHART ================= */
+/* ================= CHART ================= */
 
 function drawChart(container, data) {
   container.innerHTML = "";
@@ -51,7 +51,7 @@ function drawChart(container, data) {
 
   svg.appendChild(line);
 
-  // last price dot
+  // Last price dot
   const last = data[data.length - 1];
   const dot = document.createElementNS(svg.namespaceURI, "circle");
   dot.setAttribute("cx", x(data.length - 1));
@@ -60,14 +60,13 @@ function drawChart(container, data) {
   dot.setAttribute("fill", last.close >= data[0].close ? "#22c55e" : "#ef4444");
 
   svg.appendChild(dot);
-
   container.appendChild(svg);
 }
 
-/* ================= LOAD STOCK ================= */
+/* ================= LOAD ================= */
 
 async function loadStock(period = "1y") {
-  const ticker = qs("ticker");
+  const ticker = getTicker();
   if (!ticker) return;
 
   const res = await fetch(
@@ -75,7 +74,7 @@ async function loadStock(period = "1y") {
   );
   const json = await res.json();
 
-  if (!json.prices || json.prices.length === 0) return;
+  if (!json.meta || !json.prices) return;
 
   /* ----- HEADER ----- */
   document.getElementById("ticker").textContent = ticker;
@@ -85,41 +84,34 @@ async function loadStock(period = "1y") {
     json.meta.sector || "—";
 
   document.getElementById("price").textContent =
-    fmt(json.meta.price);
+    `$${fmt(json.meta.price)}`;
 
-  const change =
-    json.prices[json.prices.length - 1].close -
-    json.prices[json.prices.length - 2].close;
-
-  const changePct =
-    (change / json.prices[json.prices.length - 2].close) * 100;
+  const prev = json.prices[json.prices.length - 2].close;
+  const last = json.prices[json.prices.length - 1].close;
+  const delta = last - prev;
+  const pct = (delta / prev) * 100;
 
   const changeEl = document.getElementById("change");
   changeEl.textContent =
-    `${change >= 0 ? "+" : ""}${fmt(change)} (${fmt(changePct)}%)`;
-  changeEl.className = `change ${cls(change)}`;
+    `${delta >= 0 ? "+" : ""}${fmt(delta)} (${fmt(pct)}%)`;
+  changeEl.className = `change ${cls(delta)}`;
 
-  /* ----- STATS GRID ----- */
-  document.getElementById("prevClose").textContent =
-    fmt(json.prices[json.prices.length - 2].close);
-
-  document.getElementById("range52w").textContent =
+  /* ----- STATS ----- */
+  document.getElementById("prevClose").textContent = fmt(prev);
+  document.getElementById("high52w").textContent =
     fmt(json.meta.high52w);
-
   document.getElementById("pe").textContent = fmt(json.meta.pe);
   document.getElementById("peg").textContent = fmt(json.meta.peg);
   document.getElementById("eps").textContent = fmt(json.meta.eps);
   document.getElementById("dividend").textContent =
-    fmt(json.meta.div) + "%";
+    fmt(json.meta.dividendYieldPct) + "%";
 
   /* ----- CHART ----- */
-  const chartContainer = document.getElementById("chart");
-  requestAnimationFrame(() => {
-    drawChart(chartContainer, json.prices);
-  });
+  const chart = document.getElementById("chart");
+  requestAnimationFrame(() => drawChart(chart, json.prices));
 }
 
-/* ================= TIMEFRAME BUTTONS ================= */
+/* ================= TIMEFRAMES ================= */
 
 document.querySelectorAll(".tf").forEach(btn => {
   btn.addEventListener("click", () => {

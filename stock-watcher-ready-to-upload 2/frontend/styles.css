@@ -129,3 +129,15 @@ tbody tr:nth-child(even) {
 tbody tr:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+/* ---------- Icon button ---------- */
+
+.icon-btn {
+  font-size: 18px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 10px;
+}
+
+.icon-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}

@@ -83,55 +83,88 @@ function renderChart(data) {
   const min = Math.min(...prices);
   const max = Math.max(...prices);
 
-  // Prevent flatness
-  const range = max - min || min * 0.02 || 1;
-  const padding = range * 0.15;
+// =========================
+// CHART SCALING (ANTI-FLAT)
+// =========================
 
-  const points = prices.map((p, i) => {
-    const x = (i / (prices.length - 1)) * width;
-    const y =
-      height -
-      ((p - (min - padding)) / (range + padding * 2)) * height;
-    return `${x},${y}`;
-  });
+// Clean price values
+const prices = data
+  .map(d => Number(d.close))
+  .filter(v => Number.isFinite(v));
 
-  const lastY = points[points.length - 1].split(",")[1];
-
-  chartEl.innerHTML = `
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 ${width} ${height}"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-
-      <polyline
-        points="${points.join(" ")}"
-        fill="none"
-        stroke="#4c8dff"
-        stroke-width="2.5"
-      />
-
-      <polygon
-        points="0,${height} ${points.join(" ")} ${width},${height}"
-        fill="url(#fillGrad)"
-      />
-
-      <circle
-        cx="${width}"
-        cy="${lastY}"
-        r="4"
-        fill="#2ecc71"
-      />
-    </svg>
-  `;
+if (prices.length < 2) {
+  chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+  return;
 }
+
+// Dimensions (force usable size)
+const rect = chartEl.getBoundingClientRect();
+const width = Math.max(700, Math.floor(rect.width));
+const height = Math.max(420, Math.floor(rect.height));
+
+// Raw min / max
+let min = Math.min(...prices);
+let max = Math.max(...prices);
+
+// --- Yahoo-style Y scaling ---
+const realRange = max - min;
+const minVisibleRange = max * 0.06; // 6% minimum movement
+const range = Math.max(realRange, minVisibleRange);
+
+// Recenter scale
+const mid = (max + min) / 2;
+min = mid - range / 2;
+max = mid + range / 2;
+
+// Build points
+const points = prices.map((p, i) => {
+  const x = (i / (prices.length - 1)) * width;
+  const y = height - ((p - min) / (max - min)) * height;
+  return `${x},${y}`;
+});
+
+const lastY = points[points.length - 1].split(",")[1];
+
+// =========================
+// SVG OUTPUT
+// =========================
+chartEl.innerHTML = `
+  <svg
+    width="100%"
+    height="100%"
+    viewBox="0 0 ${width} ${height}"
+    preserveAspectRatio="none"
+  >
+    <defs>
+      <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+
+    <polyline
+      points="${points.join(" ")}"
+      fill="none"
+      stroke="#4c8dff"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <polygon
+      points="0,${height} ${points.join(" ")} ${width},${height}"
+      fill="url(#fillGrad)"
+    />
+
+    <circle
+      cx="${width}"
+      cy="${lastY}"
+      r="4"
+      fill="#2ecc71"
+    />
+  </svg>
+`;
+
 
 /* =========================
    LOAD STOCK DATA

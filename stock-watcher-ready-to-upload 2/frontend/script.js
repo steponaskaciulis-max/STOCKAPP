@@ -182,7 +182,9 @@ function renderTable(data) {
       <td class="ticker sticky">${s.ticker}</td>
       <td class="company sticky">${s.company || "—"}</td>
 
-      <td>${sparkline(s.spark)}</td>
+<td class="spark-cell" onclick="openStock('${s.ticker}')">
+  ${sparkline(s.spark)}
+</td>
 
       <td class="muted">${s.sector || "—"}</td>
 
@@ -233,3 +235,6 @@ window.addEventListener("load", () => {
   const createBtn = document.getElementById("createWatchlist");
   if (createBtn) createBtn.onclick = createWatchlist;
 });
+function openStock(ticker) {
+  window.location.href = `stock.html?ticker=${encodeURIComponent(ticker)}`;
+}

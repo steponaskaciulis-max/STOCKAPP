@@ -98,3 +98,29 @@ async function load() {
 
   renderTable();
 }
+function saveWatchlist() {
+  const tickers = document.getElementById("tickers").value.trim();
+  if (!tickers) {
+    alert("Nothing to save");
+    return;
+  }
+  localStorage.setItem("stockWatcherWatchlist", tickers);
+  alert("Watchlist saved");
+}
+
+function loadWatchlist() {
+  const saved = localStorage.getItem("stockWatcherWatchlist");
+  if (!saved) {
+    alert("No saved watchlist");
+    return;
+  }
+  document.getElementById("tickers").value = saved;
+  load();
+}
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("stockWatcherWatchlist");
+  if (saved) {
+    document.getElementById("tickers").value = saved;
+    load();
+  }
+});

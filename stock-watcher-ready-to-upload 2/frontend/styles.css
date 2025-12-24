@@ -612,3 +612,29 @@ button:active {
   width: 100%;
   height: 100%;
 }
+/* ===== FIX HEADER LOGO BREAKING LAYOUT ===== */
+
+.topbar {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo img {
+  height: 32px;      /* 🔒 hard limit */
+  width: auto;
+  max-height: 32px;
+  display: block;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 700;
+}

@@ -24,12 +24,16 @@ function renderWatchlists() {
     return;
   }
 
-  el.innerHTML = names.map(name => `
-    <div class="watchlist-card" onclick="openWatchlist('${name}')">
+  el.innerHTML = names
+    .map(
+      (name) => `
+    <div class="watchlist-card" onclick="openWatchlist('${name.replace(/'/g, "\\'")}')">
       <h3>${name}</h3>
       <p>${store.watchlists[name].length} stocks</p>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 }
 
 function createWatchlist() {
@@ -61,24 +65,32 @@ async function loadWatchlistView() {
   const store = getStore();
   const tickers = store.watchlists[name] || [];
 
-  document.getElementById("watchlistTitle").innerText = name;
-  document.getElementById("tickers").value = tickers.join(" ");
+  const titleEl = document.getElementById("watchlistTitle");
+  if (titleEl) titleEl.innerText = name;
 
-  if (tickers.length === 0) return;
+  const input = document.getElementById("tickers");
+  if (input) input.value = tickers.join(" ");
 
-  const qs = tickers.map(t => `tickers=${t}`).join("&");
+  if (tickers.length === 0) {
+    const tableEl = document.getElementById("table");
+    if (tableEl) tableEl.innerHTML = "<p style='color:#888'>No tickers yet. Add some above and click 💾.</p>";
+    return;
+  }
+
+  const qs = tickers.map((t) => `tickers=${encodeURIComponent(t)}`).join("&");
   const r = await fetch(`${API}/metrics?${qs}`);
   const data = (await r.json()).data;
 
   renderTable(data);
 
-  document.getElementById("updated").innerText =
-    "Updated: " + new Date().toLocaleTimeString();
+  const updated = document.getElementById("updated");
+  if (updated) updated.innerText = "Updated: " + new Date().toLocaleTimeString();
 }
 
 function updateWatchlist() {
   const params = new URLSearchParams(window.location.search);
   const name = params.get("name");
+  if (!name) return;
 
   const tickers = document
     .getElementById("tickers")
@@ -97,7 +109,9 @@ function updateWatchlist() {
 
 function fmt(x, digits = 2) {
   if (x === null || x === undefined) return "—";
-  return Number(x).toFixed(digits);
+  const n = Number(x);
+  if (Number.isNaN(n)) return "—";
+  return n.toFixed(digits);
 }
 
 function cls(x) {
@@ -105,7 +119,34 @@ function cls(x) {
   return x > 0 ? "pos" : x < 0 ? "neg" : "";
 }
 
-/* ================= TABLE (FULL DATA) ================= */
+/* ================= SPARKLINES ================= */
+
+function sparkline(values, width = 90, height = 24) {
+  if (!values || values.length < 2) return "";
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * width;
+      const y = height - ((v - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const up = values[values.length - 1] >= values[0];
+  const color = up ? "#3ddc84" : "#ff6b6b";
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <polyline fill="none" stroke="${color}" stroke-width="1.5" points="${pts}" />
+    </svg>
+  `;
+}
+
+/* ================= TABLE (FULL DATA + SPARK) ================= */
 
 function renderTable(data) {
   let html = `
@@ -114,6 +155,7 @@ function renderTable(data) {
         <tr>
           <th>Ticker</th>
           <th>Company</th>
+          <th>Spark</th>
           <th>Sector</th>
 
           <th>Price</th>
@@ -133,11 +175,12 @@ function renderTable(data) {
       <tbody>
   `;
 
-  data.forEach(s => {
+  data.forEach((s) => {
     html += `
       <tr>
         <td><strong>${s.ticker}</strong></td>
         <td>${s.company || "—"}</td>
+        <td>${sparkline(s.spark)}</td>
         <td>${s.sector || "—"}</td>
 
         <td>${fmt(s.price)}</td>

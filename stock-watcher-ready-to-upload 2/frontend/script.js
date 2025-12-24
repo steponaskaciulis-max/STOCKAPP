@@ -1,5 +1,30 @@
 const API = "https://stockapp-kym2.onrender.com";
 
+function sparkline(values, width = 80, height = 24) {
+  if (!values || values.length < 2) return "";
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <polyline
+        fill="none"
+        stroke="#3ddc84"
+        stroke-width="1.5"
+        points="${pts}"
+      />
+    </svg>
+  `;
+}
+
 let currentData = [];
 let sortKey = null;
 let sortAsc = true;

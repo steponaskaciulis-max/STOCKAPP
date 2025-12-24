@@ -235,3 +235,19 @@ body.home {
   gap: 16px;
   color: #888;
 }
+.watchlists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.watchlist-card {
+  background: #151520;
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.watchlist-card:hover {
+  background: #1f1f2e;
+}

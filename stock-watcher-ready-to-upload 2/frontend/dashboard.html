@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard · Stock Watcher</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <nav class="nav">
+    <div class="logo">Stock Watcher</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a class="active" href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <header class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Live stock metrics and performance</p>
+    </div>
+    <div id="updated"></div>
+  </header>
+
+  <section class="controls">
+    <input
+      id="tickers"
+      type="text"
+      placeholder="AAPL MSFT NVDA TSLA"
+    />
+
+    <button
+      id="loadBtn"
+      class="icon-btn"
+      onclick="load()"
+      title="Load tickers"
+    >
+      <span id="loadIcon">🔍</span>
+      <span id="spinner" class="spinner hidden"></span>
+    </button>
+
+    <button onclick="saveWatchlist()">Save</button>
+    <button onclick="loadWatchlist()">Watchlist</button>
+  </section>
+
+  <div id="table"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
 

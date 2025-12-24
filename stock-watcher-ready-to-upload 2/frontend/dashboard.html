@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard · Stock Watcher</title>
+  <title>Watchlists · Stock Watcher</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -19,36 +19,17 @@
 
   <header class="topbar">
     <div>
-      <h1>Dashboard</h1>
-      <p>Live stock metrics and performance</p>
+      <h1>Your Watchlists</h1>
+      <p>Create and manage your stock collections</p>
     </div>
-    <div id="updated"></div>
+
+    <button class="cta" onclick="createWatchlist()">
+      + Create Watchlist
+    </button>
   </header>
 
-  <section class="controls">
-    <input
-      id="tickers"
-      type="text"
-      placeholder="AAPL MSFT NVDA TSLA"
-    />
-
-    <button
-      id="loadBtn"
-      class="icon-btn"
-      onclick="load()"
-      title="Load tickers"
-    >
-      <span id="loadIcon">🔍</span>
-      <span id="spinner" class="spinner hidden"></span>
-    </button>
-
-    <button onclick="saveWatchlist()">Save</button>
-    <button onclick="loadWatchlist()">Watchlist</button>
-  </section>
-
-  <div id="table"></div>
+  <section id="watchlists" class="watchlists"></section>
 
   <script src="script.js"></script>
 </body>
 </html>
-

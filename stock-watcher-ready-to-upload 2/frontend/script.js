@@ -25,11 +25,13 @@ function sparkline(values, width = 90, height = 24) {
   const max = Math.max(...values);
   const range = max - min || 1;
 
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * width;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(" ");
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * width;
+      const y = height - ((v - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   const trendUp = values[values.length - 1] >= values[0];
   const color = trendUp ? "#3ddc84" : "#ff6b6b";
@@ -140,7 +142,8 @@ async function load() {
   const tickers = document
     .getElementById("tickers")
     .value.trim()
-    .split(/\s+/);
+    .split(/\s+/)
+    .filter(Boolean);
 
   if (tickers.length === 0) return;
 
@@ -153,6 +156,11 @@ async function load() {
   sortAsc = true;
 
   renderTable();
+
+  const updated = document.getElementById("updated");
+  if (updated) {
+    updated.innerText = "Updated: " + new Date().toLocaleTimeString();
+  }
 }
 
 /* ---------- watchlists ---------- */

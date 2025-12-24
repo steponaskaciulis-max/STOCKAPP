@@ -297,3 +297,23 @@ body.home {
   margin-bottom: 32px;
   line-height: 1.5;
 }
+/* ---------- Logo Styling ---------- */
+
+.logo-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f2937, #0f172a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.logo-badge img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}

@@ -20,10 +20,16 @@ def one_ticker(ticker):
     tk = yf.Ticker(ticker)
     info = tk.info or {}
 
-    # --- Basic info ---
+    # --- Core info ---
     price = info.get("regularMarketPrice") or info.get("currentPrice")
     sector = info.get("sector") or "Other"
+
     pe = info.get("trailingPE") or info.get("forwardPE")
+    peg = info.get("pegRatio")
+
+    eps = info.get("trailingEps")
+    dividend_yield = info.get("dividendYield")  # fraction (e.g. 0.015)
+
     high_52w = info.get("fiftyTwoWeekHigh")
 
     # --- Historical data ---
@@ -31,7 +37,6 @@ def one_ticker(ticker):
     hist_1m = tk.history(period="1mo", interval="1d")
     hist_1y = tk.history(period="1y", interval="1d")
 
-    # --- Weekly / Monthly % change ---
     weekly = (
         pct_change(hist_1w["Close"].iloc[0], hist_1w["Close"].iloc[-1])
         if len(hist_1w) >= 2
@@ -44,7 +49,6 @@ def one_ticker(ticker):
         else None
     )
 
-    # --- 52W high fallback ---
     if high_52w is None and not hist_1y.empty:
         high_52w = float(hist_1y["High"].max())
 
@@ -57,10 +61,16 @@ def one_ticker(ticker):
         "ticker": ticker,
         "sector": sector,
         "price": safe(price),
+
         "pe": safe(pe),
+        "peg": safe(peg),
+        "eps": safe(eps),
+        "dividendYieldPct": safe(dividend_yield * 100) if dividend_yield else None,
+
         "high52w": safe(high_52w),
         "pctFrom52wHigh": safe(pct_change(high_52w, price)),
         "weeklyChangePct": safe(weekly),
         "monthlyChangePct": safe(monthly),
+
         "spark": spark,
     }

@@ -4,10 +4,14 @@
 
 const params = new URLSearchParams(window.location.search);
 const TICKER = (params.get("ticker") || "").toUpperCase();
-const API_BASE = "";
+const API_BASE = ""; // same-origin
 
-// DOM
+/* =========================
+   DOM ELEMENTS
+   ========================= */
+
 const chartEl = document.getElementById("chart");
+
 const priceEl = document.getElementById("price");
 const changeEl = document.getElementById("change");
 const nameEl = document.getElementById("company-name");
@@ -20,10 +24,14 @@ const pegEl = document.getElementById("peg");
 const epsEl = document.getElementById("eps");
 const divEl = document.getElementById("dividend");
 
+/* =========================
+   STATE
+   ========================= */
+
 let lastChartData = [];
 
 /* =========================
-   Helpers
+   HELPERS
    ========================= */
 
 function fmt(n, d = 2) {
@@ -31,51 +39,59 @@ function fmt(n, d = 2) {
 }
 
 function colorize(el, val) {
+  if (!el) return;
   if (val > 0) el.style.color = "#2ecc71";
   else if (val < 0) el.style.color = "#e74c3c";
   else el.style.color = "#aaa";
 }
 
 /* =========================
-   Chart (SVG)
+   CHART RENDERER (SVG)
    ========================= */
 
 function renderChart(data) {
-  if (!data || data.length < 2) {
-    chartEl.innerHTML = "<div class='chart-empty'>No data</div>";
+  if (!chartEl) return;
+
+  if (!Array.isArray(data) || data.length < 2) {
+    chartEl.innerHTML = "<div class='chart-error'>No data</div>";
     return;
   }
 
   lastChartData = data;
 
-  // Ensure the chart has dimensions
   const w = chartEl.clientWidth || 800;
   const h = chartEl.clientHeight || 360;
 
-  const prices = data.map(d => d.close);
+  const prices = data.map(d => d.close).filter(v => typeof v === "number");
+
+  if (prices.length < 2) {
+    chartEl.innerHTML = "<div class='chart-error'>Invalid data</div>";
+    return;
+  }
+
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  const pad = 0.1 * (max - min || 1);
+  const pad = (max - min) * 0.1 || 1;
 
   const points = prices.map((p, i) => {
     const x = (i / (prices.length - 1)) * w;
     const y = h - ((p - (min - pad)) / ((max - min) + pad * 2)) * h;
     return `${x},${y}`;
-  });
+  }).join(" ");
 
-  const last = points[points.length - 1].split(",");
+  const lastY = points.split(" ").pop().split(",")[1];
 
   chartEl.innerHTML = `
     <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
       <polyline
-        points="${points.join(" ")}"
+        points="${points}"
         fill="none"
         stroke="#4c8dff"
         stroke-width="2"
       />
       <circle
-        cx="${last[0]}"
-        cy="${last[1]}"
+        cx="${w}"
+        cy="${lastY}"
         r="4"
         fill="#2ecc71"
       />
@@ -84,36 +100,45 @@ function renderChart(data) {
 }
 
 /* =========================
-   Load Data
+   LOAD STOCK DATA
    ========================= */
 
 async function loadStock(period = "1y") {
+  if (!TICKER) return;
+
   try {
     const res = await fetch(
-      `${API_BASE}/history?ticker=${TICKER}&period=${period}`
+      `${API_BASE}/history?ticker=${encodeURIComponent(TICKER)}&period=${period}`
     );
+
+    if (!res.ok) throw new Error("API error");
+
     const json = await res.json();
 
-    const { meta, prices } = json;
+    const meta = json.meta || {};
+    const prices = Array.isArray(json.prices) ? json.prices : [];
 
-    // Header
+    /* ----- HEADER ----- */
     nameEl.textContent = meta.longName || TICKER;
     sectorEl.textContent = meta.sector || "—";
-    priceEl.textContent = meta.price ? `$${fmt(meta.price)}` : "$—";
 
-    // Daily change
+    priceEl.textContent =
+      meta.price != null ? `$${fmt(meta.price)}` : "$—";
+
+    /* ----- DAILY CHANGE ----- */
     if (prices.length >= 2) {
       const prev = prices.at(-2).close;
       const last = prices.at(-1).close;
       const diff = last - prev;
       const pct = (diff / prev) * 100;
+
       changeEl.textContent = `${fmt(diff)} (${fmt(pct)}%)`;
       colorize(changeEl, diff);
     } else {
       changeEl.textContent = "—";
     }
 
-    // Stats
+    /* ----- STATS ----- */
     prevCloseEl.textContent =
       prices.length >= 2 ? fmt(prices.at(-2).close) : "—";
 
@@ -122,21 +147,24 @@ async function loadStock(period = "1y") {
     pegEl.textContent = fmt(meta.peg);
     epsEl.textContent = fmt(meta.eps);
 
-    // Dividend already % from backend
+    // ✅ DIVIDEND IS ALREADY A PERCENT FROM BACKEND
     divEl.textContent =
       meta.dividendYieldPct != null
         ? fmt(meta.dividendYieldPct) + "%"
         : "—";
 
+    /* ----- CHART ----- */
     renderChart(prices);
+
   } catch (err) {
-    console.error("Failed to load stock:", err);
-    chartEl.innerHTML = "<div class='chart-empty'>Error loading chart</div>";
+    console.error(err);
+    chartEl.innerHTML =
+      "<div class='chart-error'>Error loading chart</div>";
   }
 }
 
 /* =========================
-   Timeframe Buttons
+   TIMEFRAME BUTTONS
    ========================= */
 
 document.querySelectorAll("[data-period]").forEach(btn => {
@@ -151,12 +179,11 @@ document.querySelectorAll("[data-period]").forEach(btn => {
 });
 
 /* =========================
-   Init
+   INIT
    ========================= */
 
 if (!TICKER) {
   alert("No ticker provided");
 } else {
-  // Delay to ensure layout exists
-  setTimeout(() => loadStock("1y"), 50);
+  loadStock("1y");
 }

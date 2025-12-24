@@ -168,3 +168,70 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+/* ---------- Navigation ---------- */
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.nav a {
+  margin-left: 16px;
+  color: #aaa;
+  text-decoration: none;
+}
+
+.nav a.active,
+.nav a:hover {
+  color: white;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ---------- Homepage ---------- */
+
+body.home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.hero {
+  max-width: 720px;
+  margin: auto;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  color: #aaa;
+  font-size: 18px;
+  margin-bottom: 32px;
+}
+
+.cta {
+  display: inline-block;
+  padding: 14px 22px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.features {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  color: #888;
+}

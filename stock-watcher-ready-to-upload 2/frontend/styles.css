@@ -430,3 +430,38 @@ td svg polyline{
   table{ font-size: 13px; }
   th, td{ padding: 12px 10px; }
 }
+/* Primary data */
+td.ticker {
+  font-weight: 700;
+  font-size: 15px;
+  color: #ffffff;
+}
+
+td.company {
+  font-size: 13px;
+  color: #b5b5b5;
+}
+
+/* Price */
+td.price {
+  font-weight: 600;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+/* Percentage changes */
+td.pos {
+  color: #2fdc8f;
+  font-weight: 600;
+}
+
+td.neg {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+/* Secondary metrics (valuation, EPS, PEG) */
+td.muted {
+  color: #9aa0a6;
+  font-size: 13px;
+}

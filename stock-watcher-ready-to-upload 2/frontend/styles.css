@@ -749,3 +749,25 @@ img {
 .chart-area {
   height: 420px !important;
 }
+/* =========================
+   FIX: Chart box height & scaling
+   ========================= */
+
+.chart-wrap {
+  margin-top: 20px;
+}
+
+.chart-shell {
+  background: linear-gradient(180deg, #0f1420 0%, #0b0f17 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+}
+
+/* THIS IS THE KEY FIX */
+.chart-area {
+  height: 420px;        /* 🔥 forces vertical space */
+  width: 100%;
+  position: relative;
+}

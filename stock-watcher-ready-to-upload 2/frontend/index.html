@@ -2,45 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stock Watcher</title>
-
-  <!-- CSS -->
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div>
-      <h1>Stock Dashboard</h1>
-      <p>Live market snapshot · Valuation · Momentum · Yield</p>
+
+<body class="home">
+
+  <nav class="nav">
+    <div class="logo">Stock Watcher</div>
+    <a href="dashboard.html">Dashboard</a>
+  </nav>
+
+  <main class="hero">
+    <h1>Track stocks intelligently</h1>
+    <p>
+      Valuation, momentum, dividends and trends —
+      all in one clean dashboard.
+    </p>
+
+    <a class="cta" href="dashboard.html">
+      Open Dashboard →
+    </a>
+
+    <div class="features">
+      <span>📊 Valuation</span>
+      <span>📈 Momentum</span>
+      <span>💰 Dividends</span>
+      <span>⚡ Trends</span>
     </div>
-    <div id="updated"></div>
-  </header>
+  </main>
 
-  <section class="controls">
-  <input
-    id="tickers"
-    type="text"
-    placeholder="AAPL MSFT NVDA TSLA"
-  />
-
-  <!-- Primary action: icon -->
-  <button
-  id="loadBtn"
-  class="icon-btn"
-  onclick="load()"
-  title="Load tickers"
->
-  <span id="loadIcon">🔍</span>
-  <span id="spinner" class="spinner hidden"></span>
-</button>
-
-  <!-- Secondary actions -->
-  <button onclick="saveWatchlist()">Save</button>
-  <button onclick="loadWatchlist()">Watchlist</button>
-</section>
-
-  <div id="table"></div>
-
-  <script src="script.js"></script>
 </body>
 </html>

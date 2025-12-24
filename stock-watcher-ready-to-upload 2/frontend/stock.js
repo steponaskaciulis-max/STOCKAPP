@@ -94,7 +94,9 @@ const h = 420; // hard lock height to prevent flattening
 
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-    const pad = 0.1 * (max - min || 1);
+    const range = max - min || 1;
+const pad = range * 0.05; // tighter padding
+
 
     const points = prices
       .map((p, i) => {

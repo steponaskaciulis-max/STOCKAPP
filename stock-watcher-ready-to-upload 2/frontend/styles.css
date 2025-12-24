@@ -1,0 +1,17 @@
+body {
+  background:#0b0b0f;
+  color:#eaeaea;
+  font-family:Arial;
+  padding:20px;
+}
+table {
+  width:100%;
+  margin-top:20px;
+  border-collapse:collapse;
+}
+th,td {
+  padding:8px;
+  border-bottom:1px solid #222;
+}
+.pos { color:#3ddc84; }
+.neg { color:#ff6b6b; }

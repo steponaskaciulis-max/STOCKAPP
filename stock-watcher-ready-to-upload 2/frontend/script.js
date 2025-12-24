@@ -33,7 +33,7 @@ function sparkline(values, width = 90, height = 24) {
     })
     .join(" ");
 
-  const trendUp = values[values.length - 1] >= values[0];
+  const trendUp = values.at(-1) >= values[0];
   const color = trendUp ? "#3ddc84" : "#ff6b6b";
 
   return `
@@ -62,8 +62,8 @@ function sortBy(key) {
     const x = a[key];
     const y = b[key];
 
-    if (x === null || x === undefined) return 1;
-    if (y === null || y === undefined) return -1;
+    if (x == null) return 1;
+    if (y == null) return -1;
 
     if (typeof x === "string") {
       return sortAsc ? x.localeCompare(y) : y.localeCompare(x);
@@ -87,15 +87,13 @@ function renderTable() {
           <th onclick="sortBy('sector')">Sector</th>
 
           <th onclick="sortBy('price')">Price</th>
+          <th onclick="sortBy('dailyChangePct')">1D %</th>
 
           <th onclick="sortBy('pe')">P/E</th>
           <th onclick="sortBy('peg')">PEG</th>
 
           <th onclick="sortBy('eps')">EPS</th>
           <th onclick="sortBy('dividendYieldPct')">Div %</th>
-
-          <th onclick="sortBy('high52w')">52W High</th>
-          <th onclick="sortBy('pctFrom52wHigh')">% from 52W</th>
 
           <th onclick="sortBy('weeklyChangePct')">1W %</th>
           <th onclick="sortBy('monthlyChangePct')">1M %</th>
@@ -112,15 +110,13 @@ function renderTable() {
         <td>${s.sector || "—"}</td>
 
         <td>${fmt(s.price)}</td>
+        <td class="${cls(s.dailyChangePct)}">${fmt(s.dailyChangePct)}%</td>
 
         <td>${fmt(s.pe)}</td>
         <td>${fmt(s.peg)}</td>
 
         <td>${fmt(s.eps)}</td>
         <td>${fmt(s.dividendYieldPct)}%</td>
-
-        <td>${fmt(s.high52w)}</td>
-        <td class="${cls(s.pctFrom52wHigh)}">${fmt(s.pctFrom52wHigh)}%</td>
 
         <td class="${cls(s.weeklyChangePct)}">${fmt(s.weeklyChangePct)}%</td>
         <td class="${cls(s.monthlyChangePct)}">${fmt(s.monthlyChangePct)}%</td>
@@ -145,7 +141,7 @@ async function load() {
   const spinner = document.getElementById("spinner");
 
   const tickers = input.value.trim().split(/\s+/).filter(Boolean);
-  if (tickers.length === 0) return;
+  if (!tickers.length) return;
 
   // UI loading state
   btn.disabled = true;
@@ -154,10 +150,10 @@ async function load() {
 
   try {
     const qs = tickers.map(t => `tickers=${t}`).join("&");
-    const r = await fetch(`${API}/metrics?${qs}`);
-    const j = await r.json();
+    const res = await fetch(`${API}/metrics?${qs}`);
+    const json = await res.json();
 
-    currentData = j.data;
+    currentData = json.data;
     sortKey = null;
     sortAsc = true;
 
@@ -167,7 +163,7 @@ async function load() {
     if (updated) {
       updated.innerText = "Updated: " + new Date().toLocaleTimeString();
     }
-  } catch (err) {
+  } catch (e) {
     alert("Failed to load data");
   } finally {
     btn.disabled = false;
@@ -198,7 +194,7 @@ function loadWatchlist() {
   load();
 }
 
-/* ---------- keyboard shortcut ---------- */
+/* ---------- keyboard + auto-load ---------- */
 
 window.addEventListener("load", () => {
   const input = document.getElementById("tickers");

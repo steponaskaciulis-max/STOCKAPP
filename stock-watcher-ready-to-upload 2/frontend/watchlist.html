@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watchlist · Stock Watcher</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <nav class="nav">
+    <div class="logo">Stock Watcher</div>
+    <div class="nav-links">
+      <a href="dashboard.html">← Back to Watchlists</a>
+    </div>
+  </nav>
+
+  <header class="topbar">
+    <div>
+      <h1 id="watchlistTitle"></h1>
+      <p>Stocks in this watchlist</p>
+    </div>
+    <div id="updated"></div>
+  </header>
+
+  <section class="controls">
+    <input
+      id="tickers"
+      type="text"
+      placeholder="Add tickers (space separated)"
+    />
+
+    <button
+      id="loadBtn"
+      class="icon-btn"
+      onclick="updateWatchlist()"
+      title="Update watchlist"
+    >
+      💾
+    </button>
+  </section>
+
+  <div id="table"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
 

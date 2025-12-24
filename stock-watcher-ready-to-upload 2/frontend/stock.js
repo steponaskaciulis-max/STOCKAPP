@@ -1,262 +1,248 @@
-/* ==========================================================
-   Valyxis — Stock Page Logic (FINAL / HARDENED)
-   ========================================================== */
-
 /* =========================
-   URL + API
+   Valyxis — Stock Chart Page
    ========================= */
 
 const params = new URLSearchParams(window.location.search);
 const TICKER = (params.get("ticker") || "").toUpperCase();
+
+// ✅ IMPORTANT: Your backend (Render)
 const API_BASE = "https://stockapp-kym2.onrender.com";
 
-/* =========================
-   DOM SAFE GETTER
-   ========================= */
+// DOM
+const chartEl = document.getElementById("chart");
+const priceEl = document.getElementById("price");
+const changeEl = document.getElementById("change");
+const nameEl = document.getElementById("company-name");
+const sectorEl = document.getElementById("company-sector");
 
-function $(id) {
-  return document.getElementById(id) || null;
-}
+const prevCloseEl = document.getElementById("prev-close");
+const high52El = document.getElementById("high-52");
+const peEl = document.getElementById("pe");
+const pegEl = document.getElementById("peg");
+const epsEl = document.getElementById("eps");
+const divEl = document.getElementById("dividend");
 
-/* =========================
-   DOM ELEMENTS
-   ========================= */
-
-const chartEl = $("chart");
-
-const tickerEl = $("ticker");
-const nameEl = $("company-name");
-const sectorEl = $("company-sector");
-
-const priceEl = $("price");
-const changeEl = $("change");
-
-const prevCloseEl = $("prev-close");
-const high52El = $("high-52");
-const peEl = $("pe");
-const pegEl = $("peg");
-const epsEl = $("eps");
-const divEl = $("dividend");
+let lastChartData = [];
 
 /* =========================
-   HELPERS
+   Helpers
    ========================= */
 
 function fmt(n, d = 2) {
-  if (n === null || n === undefined || isNaN(n)) return "—";
-  return Number(n).toFixed(d);
+  if (n == null) return "—";
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toFixed(d) : "—";
 }
 
-function setText(el, val) {
-  if (!el) return;
-  el.textContent = val ?? "—";
+function fmtMoney(n, d = 2) {
+  if (n == null) return "$—";
+  const num = Number(n);
+  return Number.isFinite(num) ? `$${num.toFixed(d)}` : "$—";
 }
 
 function colorize(el, val) {
   if (!el) return;
   if (val > 0) el.style.color = "#2ecc71";
   else if (val < 0) el.style.color = "#e74c3c";
-  else el.style.color = "#aaa";
+  else el.style.color = "#aab2c0";
+}
+
+function setText(el, value) {
+  if (!el) return;
+  el.textContent = value;
 }
 
 /* =========================
-   CHART RENDER (BULLETPROOF)
+   Chart (SVG)
    ========================= */
 
 function renderChart(data) {
   if (!chartEl) return;
 
-  chartEl.innerHTML = "";
-
+  // Clear on empty
   if (!Array.isArray(data) || data.length < 2) {
-    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+    chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">No chart data</div>`;
     return;
   }
 
-  // FORCE REAL DIMENSIONS (even if CSS fails)
+  // Ensure the chart box has a real height (CSS sometimes collapses)
+  const computedH = chartEl.clientHeight;
+  if (!computedH || computedH < 200) {
+    chartEl.style.height = "420px";
+  }
+
+  // Measure AFTER forcing height
   const rect = chartEl.getBoundingClientRect();
-  const width = Math.max(rect.width || 0, 700);
-  const height = Math.max(rect.height || 0, 320);
+  const width = Math.max(720, Math.floor(rect.width || chartEl.clientWidth || 720));
+  const height = Math.max(420, Math.floor(rect.height || chartEl.clientHeight || 420));
 
-  // Extract prices
-  const prices = data.map(d => d.close).filter(n => !isNaN(n));
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
+  // Keep last data
+  lastChartData = data;
 
-// =========================
-// CHART SCALING (ANTI-FLAT)
-// =========================
+  // Extract closes
+  const closes = data
+    .map(d => Number(d.close))
+    .filter(n => Number.isFinite(n));
 
-// Clean price values
-const prices = data
-  .map(d => Number(d.close))
-  .filter(v => Number.isFinite(v));
+  if (closes.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">No chart data</div>`;
+    return;
+  }
 
-if (prices.length < 2) {
-  chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
-  return;
+  const min = Math.min(...closes);
+  const max = Math.max(...closes);
+
+  // ✅ Prevent “flatness” even when range is tiny
+  const rawRange = max - min;
+  const range = rawRange > 0 ? rawRange : Math.max(Math.abs(min) * 0.02, 1); // 2% of price or $1
+  const padding = range * 0.15;
+
+  const denom = range + padding * 2;
+
+  // Build points
+  const points = closes.map((p, i) => {
+    const x = (i / (closes.length - 1)) * width;
+    const y = height - ((p - (min - padding)) / denom) * height;
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+
+  const lastXY = points[points.length - 1].split(",");
+  const lastX = Number(lastXY[0]);
+  const lastY = Number(lastXY[1]);
+
+  chartEl.innerHTML = `
+    <svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 ${width} ${height}"
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"></stop>
+          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+
+      <!-- Area fill -->
+      <polygon
+        points="0,${height} ${points.join(" ")} ${width},${height}"
+        fill="url(#fillGrad)"
+      ></polygon>
+
+      <!-- Line -->
+      <polyline
+        points="${points.join(" ")}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="2.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      ></polyline>
+
+      <!-- Last point -->
+      <circle cx="${lastX}" cy="${lastY}" r="4.5" fill="#2ecc71"></circle>
+    </svg>
+  `;
 }
 
-// Dimensions (force usable size)
-const rect = chartEl.getBoundingClientRect();
-const width = Math.max(700, Math.floor(rect.width));
-const height = Math.max(420, Math.floor(rect.height));
-
-// Raw min / max
-let min = Math.min(...prices);
-let max = Math.max(...prices);
-
-// --- Yahoo-style Y scaling ---
-const realRange = max - min;
-const minVisibleRange = max * 0.06; // 6% minimum movement
-const range = Math.max(realRange, minVisibleRange);
-
-// Recenter scale
-const mid = (max + min) / 2;
-min = mid - range / 2;
-max = mid + range / 2;
-
-// Build points
-const points = prices.map((p, i) => {
-  const x = (i / (prices.length - 1)) * width;
-  const y = height - ((p - min) / (max - min)) * height;
-  return `${x},${y}`;
-});
-
-const lastY = points[points.length - 1].split(",")[1];
-
-// =========================
-// SVG OUTPUT
-// =========================
-chartEl.innerHTML = `
-  <svg
-    width="100%"
-    height="100%"
-    viewBox="0 0 ${width} ${height}"
-    preserveAspectRatio="none"
-  >
-    <defs>
-      <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-
-    <polyline
-      points="${points.join(" ")}"
-      fill="none"
-      stroke="#4c8dff"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-
-    <polygon
-      points="0,${height} ${points.join(" ")} ${width},${height}"
-      fill="url(#fillGrad)"
-    />
-
-    <circle
-      cx="${width}"
-      cy="${lastY}"
-      r="4"
-      fill="#2ecc71"
-    />
-  </svg>
-`;
-
-
 /* =========================
-   LOAD STOCK DATA
+   Load Data
    ========================= */
 
 async function loadStock(period = "1y") {
   if (!TICKER) return;
 
   try {
-    const res = await fetch(
-      `${API_BASE}/history?ticker=${TICKER}&period=${period}`
-    );
+    // show loading state
+    if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">Loading chart…</div>`;
 
-    if (!res.ok) throw new Error("API error");
+    const url = `${API_BASE}/history?ticker=${encodeURIComponent(TICKER)}&period=${encodeURIComponent(period)}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}`);
+    }
 
     const json = await res.json();
     const meta = json.meta || {};
-    const prices = json.prices || [];
+    const prices = Array.isArray(json.prices) ? json.prices : [];
 
-    /* ---------- HEADER ---------- */
-
-    setText(tickerEl, TICKER);
+    // Header
     setText(nameEl, meta.longName || TICKER);
     setText(sectorEl, meta.sector || "—");
 
+    // Price (top right)
     if (meta.price != null) {
-      setText(priceEl, `$${fmt(meta.price)}`);
+      priceEl && (priceEl.textContent = fmtMoney(meta.price));
     } else {
-      setText(priceEl, "$—");
+      priceEl && (priceEl.textContent = "$—");
     }
 
+    // Change (use last two points in the *current timeframe*)
     if (prices.length >= 2) {
-      const last = prices[prices.length - 1].close;
-      const prev = prices[prices.length - 2].close;
-      const diff = last - prev;
-      const pct = (diff / prev) * 100;
+      const last = Number(prices[prices.length - 1].close);
+      const prev = Number(prices[prices.length - 2].close);
 
-      setText(changeEl, `${fmt(diff)} (${fmt(pct)}%)`);
-      colorize(changeEl, diff);
+      if (Number.isFinite(last) && Number.isFinite(prev) && prev !== 0) {
+        const diff = last - prev;
+        const pct = (diff / prev) * 100;
+
+        changeEl && (changeEl.textContent = `${diff >= 0 ? "+" : ""}${fmt(diff)} (${diff >= 0 ? "+" : ""}${fmt(pct)}%)`);
+        colorize(changeEl, diff);
+      } else {
+        changeEl && (changeEl.textContent = "—");
+      }
     } else {
-      setText(changeEl, "—");
+      changeEl && (changeEl.textContent = "—");
     }
 
-    /* ---------- STATS ---------- */
+    // Stats
+    // Previous close: best effort
+    const prevClose =
+      prices.length >= 2 ? prices[prices.length - 2].close :
+      prices.length === 1 ? prices[0].close :
+      null;
 
-    setText(
-      prevCloseEl,
-      prices.length >= 2 ? fmt(prices[prices.length - 2].close) : "—"
-    );
-
+    setText(prevCloseEl, fmt(prevClose));
     setText(high52El, fmt(meta.high52w));
     setText(peEl, fmt(meta.pe));
     setText(pegEl, fmt(meta.peg));
     setText(epsEl, fmt(meta.eps));
 
-    // Dividend already % from backend
-    setText(
-      divEl,
-      meta.dividendYieldPct != null
-        ? `${fmt(meta.dividendYieldPct)}%`
-        : "—"
-    );
+    // Dividend: backend already returns percent (e.g. 0.75 for 0.75%)
+    if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
+      setText(divEl, `${fmt(meta.dividendYieldPct, 2)}%`);
+    } else {
+      setText(divEl, "—");
+    }
 
-    /* ---------- CHART ---------- */
-
+    // Render chart
     renderChart(prices);
   } catch (err) {
-    if (chartEl) {
-      chartEl.innerHTML =
-        `<div style="padding:16px;color:#e74c3c">Error loading chart</div>`;
-    }
     console.error(err);
+    if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#ff6b6b">Error loading chart</div>`;
+
+    // Don’t wipe your stats if the API fails; just show placeholders if needed
+    if (priceEl && priceEl.textContent.trim() === "") priceEl.textContent = "$—";
+    if (changeEl && changeEl.textContent.trim() === "") changeEl.textContent = "—";
   }
 }
 
 /* =========================
-   TIMEFRAME BUTTONS
+   Timeframe Buttons
    ========================= */
 
 document.querySelectorAll("[data-period]").forEach(btn => {
   btn.addEventListener("click", () => {
-    document
-      .querySelectorAll("[data-period]")
-      .forEach(b => b.classList.remove("active"));
-
+    document.querySelectorAll("[data-period]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     loadStock(btn.dataset.period);
   });
 });
 
 /* =========================
-   INIT
+   Init
    ========================= */
 
 if (!TICKER) {

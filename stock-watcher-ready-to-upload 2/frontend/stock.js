@@ -210,12 +210,17 @@ async function loadStock(period = "1y") {
     setText(pegEl, fmt(meta.peg));
     setText(epsEl, fmt(meta.eps));
 
-    // Dividend: backend already returns percent (e.g. 0.75 for 0.75%)
-    if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
-      setText(divEl, `${fmt(meta.dividendYieldPct, 2)}%`);
-    } else {
-      setText(divEl, "—");
-    }
+  if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
+  const raw = Number(meta.dividendYieldPct);
+
+  // If value looks like a decimal yield (e.g. 0.0075 = 0.75%)
+  const percent = raw < 0.1 ? raw * 100 : raw;
+
+  setText(divEl, `${fmt(percent, 2)}%`);
+} else {
+  setText(divEl, "—");
+}
+
 
     // Render chart
     renderChart(prices);

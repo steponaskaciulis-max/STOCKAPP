@@ -638,3 +638,42 @@ button:active {
   font-size: 18px;
   font-weight: 700;
 }
+/* ===============================
+   HARD STOP: HEADER / LOGO SIZE
+   =============================== */
+
+/* Header container */
+.topbar,
+header {
+  height: 64px !important;
+  max-height: 64px !important;
+  min-height: 64px !important;
+  overflow: hidden !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Brand wrapper */
+.brand,
+.brand-logo {
+  display: flex;
+  align-items: center;
+  max-height: 64px !important;
+}
+
+/* Logo image — FORCE SIZE */
+.brand-logo img,
+header img,
+img[alt*="Valyxis"] {
+  height: 28px !important;
+  max-height: 28px !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Safety: prevent giant SVGs or PNGs */
+svg,
+img {
+  max-height: 28px;
+}

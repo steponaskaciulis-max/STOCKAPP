@@ -79,6 +79,15 @@ function renderChart(data) {
   const width = Math.max(720, rect.width);
   const height = Math.max(420, rect.height);
 
+   // Inner padding so line never touches rounded edges
+   const PAD_TOP = 20;
+   const PAD_BOTTOM = 20;
+   const PAD_LEFT = 0;
+   const PAD_RIGHT = 0;
+
+   const innerHeight = height - PAD_TOP - PAD_BOTTOM;
+   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
+
   const closes = data.map(d => Number(d.close)).filter(Number.isFinite);
 
   let min = Math.min(...closes);
@@ -94,7 +103,11 @@ function renderChart(data) {
 
   const points = data.map((d, i) => {
     const x = (i / (data.length - 1)) * width;
-    const y = height - ((d.close - min) / (max - min)) * height;
+   const y =
+  PAD_TOP +
+  (1 - (d.close - (min - padding)) / ((max - min) + padding * 2)) *
+    innerHeight;
+
     return { x, y, price: d.close, time: d.t };
   });
 

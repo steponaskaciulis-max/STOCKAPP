@@ -42,37 +42,40 @@ function colorize(el, val) {
 
 function renderChart(data) {
   if (!data || data.length < 2) {
-    chartEl.innerHTML = "";
+    chartEl.innerHTML = "<div class='chart-empty'>No data</div>";
     return;
   }
 
   lastChartData = data;
 
-  const w = chartEl.clientWidth;
-  const h = chartEl.clientHeight;
+  // Ensure the chart has dimensions
+  const w = chartEl.clientWidth || 800;
+  const h = chartEl.clientHeight || 360;
 
   const prices = data.map(d => d.close);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   const pad = 0.1 * (max - min || 1);
 
-  const pts = prices.map((p, i) => {
+  const points = prices.map((p, i) => {
     const x = (i / (prices.length - 1)) * w;
     const y = h - ((p - (min - pad)) / ((max - min) + pad * 2)) * h;
     return `${x},${y}`;
-  }).join(" ");
+  });
+
+  const last = points[points.length - 1].split(",");
 
   chartEl.innerHTML = `
-    <svg width="${w}" height="${h}">
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
       <polyline
-        points="${pts}"
+        points="${points.join(" ")}"
         fill="none"
         stroke="#4c8dff"
         stroke-width="2"
       />
       <circle
-        cx="${w}"
-        cy="${pts.split(" ").pop().split(",")[1]}"
+        cx="${last[0]}"
+        cy="${last[1]}"
         r="4"
         fill="#2ecc71"
       />
@@ -85,45 +88,51 @@ function renderChart(data) {
    ========================= */
 
 async function loadStock(period = "1y") {
-  const res = await fetch(
-    `${API_BASE}/history?ticker=${TICKER}&period=${period}`
-  );
-  const json = await res.json();
+  try {
+    const res = await fetch(
+      `${API_BASE}/history?ticker=${TICKER}&period=${period}`
+    );
+    const json = await res.json();
 
-  const { meta, prices } = json;
+    const { meta, prices } = json;
 
-  // Header
-  nameEl.textContent = meta.longName || TICKER;
-  sectorEl.textContent = meta.sector || "—";
+    // Header
+    nameEl.textContent = meta.longName || TICKER;
+    sectorEl.textContent = meta.sector || "—";
+    priceEl.textContent = meta.price ? `$${fmt(meta.price)}` : "$—";
 
-  priceEl.textContent = meta.price ? `$${fmt(meta.price)}` : "$—";
+    // Daily change
+    if (prices.length >= 2) {
+      const prev = prices.at(-2).close;
+      const last = prices.at(-1).close;
+      const diff = last - prev;
+      const pct = (diff / prev) * 100;
+      changeEl.textContent = `${fmt(diff)} (${fmt(pct)}%)`;
+      colorize(changeEl, diff);
+    } else {
+      changeEl.textContent = "—";
+    }
 
-  // Change
-  if (prices.length >= 2) {
-    const diff = prices.at(-1).close - prices.at(-2).close;
-    const pct = (diff / prices.at(-2).close) * 100;
-    changeEl.textContent = `${fmt(diff)} (${fmt(pct)}%)`;
-    colorize(changeEl, diff);
-  } else {
-    changeEl.textContent = "—";
+    // Stats
+    prevCloseEl.textContent =
+      prices.length >= 2 ? fmt(prices.at(-2).close) : "—";
+
+    high52El.textContent = fmt(meta.high52w);
+    peEl.textContent = fmt(meta.pe);
+    pegEl.textContent = fmt(meta.peg);
+    epsEl.textContent = fmt(meta.eps);
+
+    // Dividend already % from backend
+    divEl.textContent =
+      meta.dividendYieldPct != null
+        ? fmt(meta.dividendYieldPct) + "%"
+        : "—";
+
+    renderChart(prices);
+  } catch (err) {
+    console.error("Failed to load stock:", err);
+    chartEl.innerHTML = "<div class='chart-empty'>Error loading chart</div>";
   }
-
-  // Stats (NO DOUBLE MULTIPLY)
-  prevCloseEl.textContent =
-    prices.length ? fmt(prices.at(-2)?.close) : "—";
-
-  high52El.textContent = fmt(meta.high52w);
-  peEl.textContent = fmt(meta.pe);
-  pegEl.textContent = fmt(meta.peg);
-  epsEl.textContent = fmt(meta.eps);
-
-  // 🔥 FIXED DIVIDEND (already % from backend)
-  divEl.textContent =
-    meta.dividendYieldPct != null
-      ? fmt(meta.dividendYieldPct) + "%"
-      : "—";
-
-  renderChart(prices);
 }
 
 /* =========================
@@ -148,5 +157,6 @@ document.querySelectorAll("[data-period]").forEach(btn => {
 if (!TICKER) {
   alert("No ticker provided");
 } else {
-  loadStock("1y");
+  // Delay to ensure layout exists
+  setTimeout(() => loadStock("1y"), 50);
 }

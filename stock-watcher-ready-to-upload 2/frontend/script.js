@@ -1,6 +1,6 @@
 const API = "https://stockapp-kym2.onrender.com";
 
-/* ---------- storage ---------- */
+/* ================= STORAGE ================= */
 
 function getStore() {
   return JSON.parse(localStorage.getItem("stockWatcher")) || { watchlists: {} };
@@ -10,13 +10,13 @@ function saveStore(store) {
   localStorage.setItem("stockWatcher", JSON.stringify(store));
 }
 
-/* ---------- watchlists dashboard ---------- */
+/* ================= DASHBOARD ================= */
 
 function renderWatchlists() {
-  const store = getStore();
   const el = document.getElementById("watchlists");
   if (!el) return;
 
+  const store = getStore();
   const names = Object.keys(store.watchlists);
 
   if (names.length === 0) {
@@ -51,7 +51,7 @@ function openWatchlist(name) {
   window.location.href = `watchlist.html?name=${encodeURIComponent(name)}`;
 }
 
-/* ---------- single watchlist ---------- */
+/* ================= WATCHLIST VIEW ================= */
 
 async function loadWatchlistView() {
   const params = new URLSearchParams(window.location.search);
@@ -93,7 +93,19 @@ function updateWatchlist() {
   loadWatchlistView();
 }
 
-/* ---------- table rendering (unchanged logic) ---------- */
+/* ================= HELPERS ================= */
+
+function fmt(x, digits = 2) {
+  if (x === null || x === undefined) return "—";
+  return Number(x).toFixed(digits);
+}
+
+function cls(x) {
+  if (x === null || x === undefined) return "";
+  return x > 0 ? "pos" : x < 0 ? "neg" : "";
+}
+
+/* ================= TABLE (FULL DATA) ================= */
 
 function renderTable(data) {
   let html = `
@@ -102,10 +114,20 @@ function renderTable(data) {
         <tr>
           <th>Ticker</th>
           <th>Company</th>
+          <th>Sector</th>
+
           <th>Price</th>
           <th>1D %</th>
+          <th>1W %</th>
+          <th>1M %</th>
+
           <th>P/E</th>
           <th>PEG</th>
+          <th>EPS</th>
+          <th>Div %</th>
+
+          <th>52W High</th>
+          <th>Δ from 52W</th>
         </tr>
       </thead>
       <tbody>
@@ -114,14 +136,22 @@ function renderTable(data) {
   data.forEach(s => {
     html += `
       <tr>
-        <td>${s.ticker}</td>
+        <td><strong>${s.ticker}</strong></td>
         <td>${s.company || "—"}</td>
-        <td>${s.price?.toFixed(2) ?? "—"}</td>
-        <td class="${s.dailyChangePct > 0 ? "pos" : "neg"}">
-          ${s.dailyChangePct?.toFixed(2) ?? "—"}%
-        </td>
-        <td>${s.pe?.toFixed(2) ?? "—"}</td>
-        <td>${s.peg?.toFixed(2) ?? "—"}</td>
+        <td>${s.sector || "—"}</td>
+
+        <td>${fmt(s.price)}</td>
+        <td class="${cls(s.dailyChangePct)}">${fmt(s.dailyChangePct)}%</td>
+        <td class="${cls(s.weeklyChangePct)}">${fmt(s.weeklyChangePct)}%</td>
+        <td class="${cls(s.monthlyChangePct)}">${fmt(s.monthlyChangePct)}%</td>
+
+        <td>${fmt(s.pe)}</td>
+        <td>${fmt(s.peg)}</td>
+        <td>${fmt(s.eps)}</td>
+        <td>${fmt(s.dividendYieldPct)}%</td>
+
+        <td>${fmt(s.high52w)}</td>
+        <td class="${cls(s.pctFrom52wHigh)}">${fmt(s.pctFrom52wHigh)}%</td>
       </tr>
     `;
   });
@@ -130,7 +160,7 @@ function renderTable(data) {
   document.getElementById("table").innerHTML = html;
 }
 
-/* ---------- init ---------- */
+/* ================= INIT ================= */
 
 window.addEventListener("load", () => {
   renderWatchlists();

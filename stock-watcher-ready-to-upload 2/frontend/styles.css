@@ -141,3 +141,30 @@ tbody tr:hover {
 .icon-btn:hover {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
 }
+/* ---------- Spinner ---------- */
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Disabled button ---------- */
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

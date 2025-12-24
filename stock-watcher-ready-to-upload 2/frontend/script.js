@@ -1,4 +1,4 @@
-const API = "http://localhost:8000";
+const API = "https://stock-watcher-backend.onrender.com";
 
 function cls(x){return x>0?"pos":x<0?"neg":"";}
 

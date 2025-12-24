@@ -1,7 +1,5 @@
 const API_BASE = "https://stockapp-kym2.onrender.com";
 
-/* ================= UTILS ================= */
-
 function getTicker() {
   return new URLSearchParams(window.location.search).get("ticker");
 }
@@ -16,20 +14,18 @@ function cls(x) {
   return x >= 0 ? "positive" : "negative";
 }
 
-/* ================= CHART ================= */
-
 function drawChart(container, data) {
   container.innerHTML = "";
-
   if (!data || data.length < 2) return;
 
-  const w = container.clientWidth;
-  const h = container.clientHeight;
+  const w = container.clientWidth || 800;
+  const h = container.clientHeight || 420;
   const pad = 40;
 
   const prices = data.map(d => d.close);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
+  if (min === max) return;
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", w);
@@ -44,84 +40,78 @@ function drawChart(container, data) {
   });
 
   const line = document.createElementNS(svg.namespaceURI, "path");
-  line.setAttribute("d", path);
+  line.setAttribute("d", path.trim());
   line.setAttribute("fill", "none");
   line.setAttribute("stroke", "#4f8cff");
   line.setAttribute("stroke-width", "2");
-
   svg.appendChild(line);
 
-  // Last price dot
-  const last = data[data.length - 1];
+  const first = data[0].close;
+  const last = data[data.length - 1].close;
+
   const dot = document.createElementNS(svg.namespaceURI, "circle");
   dot.setAttribute("cx", x(data.length - 1));
-  dot.setAttribute("cy", y(last.close));
+  dot.setAttribute("cy", y(last));
   dot.setAttribute("r", 4);
-  dot.setAttribute("fill", last.close >= data[0].close ? "#22c55e" : "#ef4444");
-
+  dot.setAttribute("fill", last >= first ? "#22c55e" : "#ef4444");
   svg.appendChild(dot);
+
   container.appendChild(svg);
 }
-
-/* ================= LOAD ================= */
 
 async function loadStock(period = "1y") {
   const ticker = getTicker();
   if (!ticker) return;
 
-  const res = await fetch(
-    `${API_BASE}/history?ticker=${ticker}&period=${period}`
-  );
+  const res = await fetch(`${API_BASE}/history?ticker=${encodeURIComponent(ticker)}&period=${period}`);
   const json = await res.json();
 
-  if (!json.meta || !json.prices) return;
+  if (!json || !json.meta) return;
 
-  /* ----- HEADER ----- */
-  document.getElementById("ticker").textContent = ticker;
-  document.getElementById("company").textContent =
-    json.meta.longName || "—";
-  document.getElementById("sector").textContent =
-    json.meta.sector || "—";
+  document.getElementById("ticker").textContent = ticker.toUpperCase();
+  document.getElementById("company").textContent = json.meta.longName || "—";
+  document.getElementById("sector").textContent = json.meta.sector || "—";
 
+  const priceVal = json.meta.price;
   document.getElementById("price").textContent =
-    `$${fmt(json.meta.price)}`;
+    (priceVal === null || priceVal === undefined) ? "—" : `$${fmt(priceVal)}`;
 
-  const prev = json.prices[json.prices.length - 2].close;
-  const last = json.prices[json.prices.length - 1].close;
-  const delta = last - prev;
-  const pct = (delta / prev) * 100;
+  const prices = json.prices || [];
+  if (prices.length >= 2) {
+    const prev = prices[prices.length - 2].close;
+    const last = prices[prices.length - 1].close;
+    const delta = last - prev;
+    const pct = (delta / prev) * 100;
 
-  const changeEl = document.getElementById("change");
-  changeEl.textContent =
-    `${delta >= 0 ? "+" : ""}${fmt(delta)} (${fmt(pct)}%)`;
-  changeEl.className = `change ${cls(delta)}`;
+    const changeEl = document.getElementById("change");
+    changeEl.textContent = `${delta >= 0 ? "+" : ""}${fmt(delta)} (${fmt(pct)}%)`;
+    changeEl.className = `change ${cls(delta)}`;
 
-  /* ----- STATS ----- */
-  document.getElementById("prevClose").textContent = fmt(prev);
-  document.getElementById("high52w").textContent =
-    fmt(json.meta.high52w);
+    document.getElementById("prevClose").textContent = fmt(prev);
+  } else {
+    document.getElementById("change").textContent = "—";
+    document.getElementById("prevClose").textContent = "—";
+  }
+
+  document.getElementById("high52w").textContent = fmt(json.meta.high52w);
   document.getElementById("pe").textContent = fmt(json.meta.pe);
   document.getElementById("peg").textContent = fmt(json.meta.peg);
   document.getElementById("eps").textContent = fmt(json.meta.eps);
+
+  const div = json.meta.dividendYieldPct;
   document.getElementById("dividend").textContent =
-    fmt(json.meta.dividendYieldPct) + "%";
+    (div === null || div === undefined) ? "—" : `${fmt(div)}%`;
 
-  /* ----- CHART ----- */
   const chart = document.getElementById("chart");
-  requestAnimationFrame(() => drawChart(chart, json.prices));
+  requestAnimationFrame(() => drawChart(chart, prices));
 }
-
-/* ================= TIMEFRAMES ================= */
 
 document.querySelectorAll(".tf").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".tf")
-      .forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tf").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     loadStock(btn.dataset.range);
   });
 });
-
-/* ================= INIT ================= */
 
 loadStock("1y");

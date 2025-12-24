@@ -92,10 +92,21 @@ const h = 420; // hard lock height to prevent flattening
       return;
     }
 
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
+       // --- Robust Y-scale (prevents "flat" charts from outliers like 0) ---
+    const sorted = [...prices].sort((a, b) => a - b);
+    const n = sorted.length;
+
+    // Use 2nd–98th percentile so one bad value can't flatten the chart
+    const lo = sorted[Math.floor(n * 0.02)];
+    const hi = sorted[Math.ceil(n * 0.98) - 1];
+
+    // Fallback if percentiles collapse (very small dataset)
+    const min = Number.isFinite(lo) ? lo : Math.min(...prices);
+    const max = Number.isFinite(hi) ? hi : Math.max(...prices);
+
     const range = max - min || 1;
-const pad = range * 0.05; // tighter padding
+    const pad = range * 0.10; // a bit more padding so it breathes
+ding
 
 
     const points = prices

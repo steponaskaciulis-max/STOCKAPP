@@ -57,3 +57,25 @@ td:nth-child(2) {
 .neg {
   color: #ff6b6b;
 }
+/* Make table horizontally scrollable */
+#table {
+  overflow-x: auto;
+}
+
+/* Sticky header */
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #151520;
+}
+
+/* Prevent text wrapping in cells */
+th, td {
+  white-space: nowrap;
+}
+
+/* Optional: subtle hover effect */
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}

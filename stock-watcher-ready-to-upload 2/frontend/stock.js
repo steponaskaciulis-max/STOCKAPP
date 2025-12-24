@@ -111,11 +111,11 @@ async function loadStock(period = "1y") {
   $("peg").textContent = fmt(data.meta.peg);
   $("eps").textContent = fmt(data.meta.eps);
 
-  $("dividend").textContent =
-    data.meta.dividendYieldPct != null
-      ? fmt(data.meta.dividendYieldPct) + "%"
-      : "—";
-
+  dividendEl.textContent =
+  meta.dividendYieldPct != null
+    ? Number(meta.dividendYieldPct).toFixed(2) + "%"
+    : "—";
+e
   setTimeout(() => {
     drawChart($("chart"), data.prices);
   }, 100);

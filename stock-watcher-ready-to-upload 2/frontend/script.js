@@ -1,33 +1,10 @@
 const API = "https://stockapp-kym2.onrender.com";
 
-function sparkline(values, width = 80, height = 24) {
-  if (!values || values.length < 2) return "";
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * width;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(" ");
-
-  return `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <polyline
-        fill="none"
-        stroke="#3ddc84"
-        stroke-width="1.5"
-        points="${pts}"
-      />
-    </svg>
-  `;
-}
-
 let currentData = [];
 let sortKey = null;
 let sortAsc = true;
+
+/* ---------- helpers ---------- */
 
 function cls(x) {
   if (x === null || x === undefined) return "";
@@ -38,6 +15,40 @@ function fmt(x, digits = 2) {
   if (x === null || x === undefined) return "—";
   return Number(x).toFixed(digits);
 }
+
+/* ---------- sparkline ---------- */
+
+function sparkline(values, width = 90, height = 24) {
+  if (!values || values.length < 2) return "";
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * width;
+      const y = height - ((v - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const trendUp = values[values.length - 1] >= values[0];
+  const color = trendUp ? "#3ddc84" : "#ff6b6b";
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <polyline
+        fill="none"
+        stroke="${color}"
+        stroke-width="1.5"
+        points="${pts}"
+      />
+    </svg>
+  `;
+}
+
+/* ---------- sorting ---------- */
 
 function sortBy(key) {
   if (sortKey === key) {
@@ -64,12 +75,15 @@ function sortBy(key) {
   renderTable();
 }
 
+/* ---------- rendering ---------- */
+
 function renderTable() {
   let html = `
     <table>
       <thead>
         <tr>
           <th onclick="sortBy('ticker')">Ticker</th>
+          <th>Spark</th>
           <th onclick="sortBy('sector')">Sector</th>
           <th onclick="sortBy('price')">Price</th>
           <th onclick="sortBy('pe')">P/E</th>
@@ -86,6 +100,7 @@ function renderTable() {
     html += `
       <tr>
         <td>${s.ticker}</td>
+        <td>${sparkline(s.spark)}</td>
         <td>${s.sector || "—"}</td>
         <td>${fmt(s.price)}</td>
         <td>${fmt(s.pe)}</td>
@@ -105,6 +120,8 @@ function renderTable() {
   document.getElementById("table").innerHTML = html;
 }
 
+/* ---------- data loading ---------- */
+
 async function load() {
   const tickers = document
     .getElementById("tickers")
@@ -123,6 +140,9 @@ async function load() {
 
   renderTable();
 }
+
+/* ---------- watchlists ---------- */
+
 function saveWatchlist() {
   const tickers = document.getElementById("tickers").value.trim();
   if (!tickers) {
@@ -142,6 +162,9 @@ function loadWatchlist() {
   document.getElementById("tickers").value = saved;
   load();
 }
+
+/* ---------- auto load ---------- */
+
 window.addEventListener("load", () => {
   const saved = localStorage.getItem("stockWatcherWatchlist");
   if (saved) {

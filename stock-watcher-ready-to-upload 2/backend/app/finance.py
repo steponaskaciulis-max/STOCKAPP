@@ -17,12 +17,8 @@ def pct_change(start, end):
 
 
 def compute_eps_growth(tk):
-    """
-    Estimate annualized EPS growth (%) from historical yearly EPS.
-    Returns None if data is missing or unreliable.
-    """
     try:
-        earnings = tk.earnings  # yearly EPS
+        earnings = tk.earnings
         if earnings is None or earnings.empty:
             return None
 
@@ -33,7 +29,6 @@ def compute_eps_growth(tk):
         start = eps_values[0]
         end = eps_values[-1]
 
-        # Avoid nonsense PEGs
         if start <= 0 or end <= 0:
             return None
 
@@ -49,7 +44,6 @@ def one_ticker(ticker):
     tk = yf.Ticker(ticker)
     info = tk.info or {}
 
-    # ---------- Core info ----------
     price = info.get("regularMarketPrice") or info.get("currentPrice")
     sector = info.get("sector") or "Other"
 
@@ -58,14 +52,18 @@ def one_ticker(ticker):
 
     high_52w = info.get("fiftyTwoWeekHigh")
 
-    # ---------- Dividend yield (FIXED) ----------
+    # ---------- Dividend yield (ROBUST FIX) ----------
     dividend_yield = info.get("dividendYield")
     dividend_pct = None
+
     if dividend_yield is not None:
         try:
-            # Yahoo usually returns a fraction (0.0075 = 0.75%)
+            # If < 0.1 → fraction (0.0075 = 0.75%)
+            # Else → already percent (0.75 = 0.75%)
             dividend_pct = (
-                dividend_yield * 100 if dividend_yield <= 1 else dividend_yield
+                dividend_yield * 100
+                if dividend_yield < 0.1
+                else dividend_yield
             )
         except Exception:
             dividend_pct = None
@@ -90,16 +88,14 @@ def one_ticker(ticker):
     if high_52w is None and not hist_1y.empty:
         high_52w = float(hist_1y["High"].max())
 
-    # ---------- Sparkline (last ~30 closes) ----------
     spark = []
     if not hist_1m.empty:
         spark = [float(x) for x in hist_1m["Close"].tail(30)]
 
-    # ---------- EPS growth & Derived PEG ----------
     eps_growth_pct = compute_eps_growth(tk)
 
     derived_peg = None
-    if pe is not None and eps_growth_pct is not None and eps_growth_pct > 0:
+    if pe is not None and eps_growth_pct and eps_growth_pct > 0:
         derived_peg = pe / eps_growth_pct
 
     return {

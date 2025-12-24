@@ -1,5 +1,9 @@
 const API = "https://stockapp-kym2.onrender.com";
 
+let currentData = [];
+let sortKey = null;
+let sortAsc = true;
+
 function cls(x) {
   if (x === null || x === undefined) return "";
   return x > 0 ? "pos" : x < 0 ? "neg" : "";
@@ -10,36 +14,50 @@ function fmt(x, digits = 2) {
   return Number(x).toFixed(digits);
 }
 
-async function load() {
-  const tickers = document
-    .getElementById("tickers")
-    .value.trim()
-    .split(/\s+/);
+function sortBy(key) {
+  if (sortKey === key) {
+    sortAsc = !sortAsc;
+  } else {
+    sortKey = key;
+    sortAsc = true;
+  }
 
-  if (tickers.length === 0) return;
+  currentData.sort((a, b) => {
+    const x = a[key];
+    const y = b[key];
 
-  const qs = tickers.map(t => `tickers=${t}`).join("&");
-  const r = await fetch(`${API}/metrics?${qs}`);
-  const j = await r.json();
+    if (x === null || x === undefined) return 1;
+    if (y === null || y === undefined) return -1;
 
+    if (typeof x === "string") {
+      return sortAsc ? x.localeCompare(y) : y.localeCompare(x);
+    }
+
+    return sortAsc ? x - y : y - x;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
   let html = `
     <table>
       <thead>
         <tr>
-          <th>Ticker</th>
-          <th>Sector</th>
-          <th>Price</th>
-          <th>P/E</th>
-          <th>52W High</th>
-          <th>% from 52W</th>
-          <th>1W %</th>
-          <th>1M %</th>
+          <th onclick="sortBy('ticker')">Ticker</th>
+          <th onclick="sortBy('sector')">Sector</th>
+          <th onclick="sortBy('price')">Price</th>
+          <th onclick="sortBy('pe')">P/E</th>
+          <th onclick="sortBy('high52w')">52W High</th>
+          <th onclick="sortBy('pctFrom52wHigh')">% from 52W</th>
+          <th onclick="sortBy('weeklyChangePct')">1W %</th>
+          <th onclick="sortBy('monthlyChangePct')">1M %</th>
         </tr>
       </thead>
       <tbody>
   `;
 
-  j.data.forEach(s => {
+  currentData.forEach(s => {
     html += `
       <tr>
         <td>${s.ticker}</td>
@@ -60,4 +78,23 @@ async function load() {
   `;
 
   document.getElementById("table").innerHTML = html;
+}
+
+async function load() {
+  const tickers = document
+    .getElementById("tickers")
+    .value.trim()
+    .split(/\s+/);
+
+  if (tickers.length === 0) return;
+
+  const qs = tickers.map(t => `tickers=${t}`).join("&");
+  const r = await fetch(`${API}/metrics?${qs}`);
+  const j = await r.json();
+
+  currentData = j.data;
+  sortKey = null;
+  sortAsc = true;
+
+  renderTable();
 }

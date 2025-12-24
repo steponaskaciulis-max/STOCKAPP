@@ -307,9 +307,11 @@ body.home {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+ box-shadow:
+  0 0 0 1px rgba(59, 130, 246, 0.25),   /* subtle blue outline */
+  0 8px 20px rgba(59, 130, 246, 0.20),  /* outer glow */
+  0 4px 12px rgba(0, 0, 0, 0.45),       /* depth */
+  inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .logo-badge img {

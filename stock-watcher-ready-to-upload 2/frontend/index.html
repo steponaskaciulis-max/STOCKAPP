@@ -24,9 +24,15 @@
   />
 
   <!-- Primary action: icon -->
-  <button class="icon-btn" onclick="load()" title="Load tickers">
-    🔍
-  </button>
+  <button
+  id="loadBtn"
+  class="icon-btn"
+  onclick="load()"
+  title="Load tickers"
+>
+  <span id="loadIcon">🔍</span>
+  <span id="spinner" class="spinner hidden"></span>
+</button>
 
   <!-- Secondary actions -->
   <button onclick="saveWatchlist()">Save</button>

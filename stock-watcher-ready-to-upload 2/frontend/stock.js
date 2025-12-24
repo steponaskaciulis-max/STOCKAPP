@@ -27,6 +27,14 @@ let lastChartData = [];
 /* =========================
    Helpers
    ========================= */
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 function fmt(n, d = 2) {
   if (n == null) return "—";
@@ -57,37 +65,123 @@ function setText(el, value) {
    ========================= */
 
 function renderChart(data) {
-  if (!chartEl) return;
-
-  // Clear on empty
-  if (!Array.isArray(data) || data.length < 2) {
-    chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">No chart data</div>`;
+  if (!chartEl || !Array.isArray(data) || data.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
     return;
   }
 
-  // Ensure the chart box has a real height (CSS sometimes collapses)
-  const computedH = chartEl.clientHeight;
-  if (!computedH || computedH < 200) {
+  // Force usable height
+  if (chartEl.clientHeight < 200) {
     chartEl.style.height = "420px";
   }
 
-  // Measure AFTER forcing height
   const rect = chartEl.getBoundingClientRect();
-  const width = Math.max(720, Math.floor(rect.width || chartEl.clientWidth || 720));
-  const height = Math.max(420, Math.floor(rect.height || chartEl.clientHeight || 420));
+  const width = Math.max(720, rect.width);
+  const height = Math.max(420, rect.height);
 
-  // Keep last data
-  lastChartData = data;
+  const closes = data.map(d => Number(d.close)).filter(Number.isFinite);
 
-  // Extract closes
-  const closes = data
-    .map(d => Number(d.close))
-    .filter(n => Number.isFinite(n));
+  let min = Math.min(...closes);
+  let max = Math.max(...closes);
 
-  if (closes.length < 2) {
-    chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">No chart data</div>`;
-    return;
-  }
+  // Anti-flat scaling (Yahoo-style)
+  const realRange = max - min;
+  const minVisibleRange = max * 0.06;
+  const range = Math.max(realRange, minVisibleRange);
+  const mid = (min + max) / 2;
+  min = mid - range / 2;
+  max = mid + range / 2;
+
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((d.close - min) / (max - min)) * height;
+    return { x, y, price: d.close, time: d.t };
+  });
+
+  chartEl.innerHTML = `
+    <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Area -->
+      <polygon
+        points="0,${height} ${points.map(p => `${p.x},${p.y}`).join(" ")} ${width},${height}"
+        fill="url(#fillGrad)"
+      />
+
+      <!-- Line -->
+      <polyline
+        points="${points.map(p => `${p.x},${p.y}`).join(" ")}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
+
+      <!-- Crosshair -->
+      <line id="crosshair" y1="0" y2="${height}" stroke="#8892b0" stroke-dasharray="4" opacity="0" />
+
+      <!-- Hover point -->
+      <circle id="hoverDot" r="5" fill="#fff" stroke="#4c8dff" stroke-width="2" opacity="0" />
+    </svg>
+
+    <div id="tooltip" style="
+      position:absolute;
+      pointer-events:none;
+      background:#0b1220;
+      color:#f4f7ff;
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px;
+      padding:8px 10px;
+      font-size:12px;
+      opacity:0;
+      transform:translate(-50%, -110%);
+      white-space:nowrap;
+    "></div>
+  `;
+
+  const svg = chartEl.querySelector("svg");
+  const crosshair = chartEl.querySelector("#crosshair");
+  const dot = chartEl.querySelector("#hoverDot");
+  const tooltip = chartEl.querySelector("#tooltip");
+
+  svg.addEventListener("mousemove", e => {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const cursor = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    const idx = Math.round((cursor.x / width) * (points.length - 1));
+    const p = points[Math.max(0, Math.min(points.length - 1, idx))];
+
+    crosshair.setAttribute("x1", p.x);
+    crosshair.setAttribute("x2", p.x);
+    crosshair.style.opacity = 1;
+
+    dot.setAttribute("cx", p.x);
+    dot.setAttribute("cy", p.y);
+    dot.style.opacity = 1;
+
+    tooltip.style.opacity = 1;
+    tooltip.style.left = `${p.x}px`;
+    tooltip.style.top = `${p.y}px`;
+    tooltip.innerHTML = `
+      <strong>$${p.price.toFixed(2)}</strong><br/>
+      ${formatDate(p.time)}
+    `;
+  });
+
+  svg.addEventListener("mouseleave", () => {
+    crosshair.style.opacity = 0;
+    dot.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  });
+}
+
 
   const min = Math.min(...closes);
   const max = Math.max(...closes);

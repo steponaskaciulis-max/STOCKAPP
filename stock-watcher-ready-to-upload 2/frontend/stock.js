@@ -22,37 +22,46 @@ function cls(x) {
 
 function drawChart(container, prices) {
   container.innerHTML = "";
-  if (!prices || prices.length < 2) return;
 
-  const w = container.clientWidth;
-  const h = container.clientHeight;
+  if (!prices || prices.length < 2) {
+    console.warn("No price data");
+    return;
+  }
+
+  // 🔑 FORCE dimensions
+  const w = container.offsetWidth || 900;
+  const h = container.offsetHeight || 420;
   const pad = 40;
 
-  const vals = prices.map(p => p.close);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
+  const values = prices.map(p => p.close);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  if (min === max) return;
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", w);
   svg.setAttribute("height", h);
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
   const x = i => pad + (i / (prices.length - 1)) * (w - pad * 2);
   const y = v => h - pad - ((v - min) / (max - min)) * (h - pad * 2);
 
-  let d = "";
+  let path = "";
   prices.forEach((p, i) => {
-    d += (i === 0 ? "M" : "L") + `${x(i)},${y(p.close)} `;
+    path += (i === 0 ? "M" : "L") + `${x(i)},${y(p.close)} `;
   });
 
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", d);
-  path.setAttribute("stroke", "#4f8cff");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke-width", "2");
+  const line = document.createElementNS(svg.namespaceURI, "path");
+  line.setAttribute("d", path);
+  line.setAttribute("fill", "none");
+  line.setAttribute("stroke", "#4f8cff");
+  line.setAttribute("stroke-width", "2");
 
-  svg.appendChild(path);
+  svg.appendChild(line);
   container.appendChild(svg);
 }
+
 
 /* ================= LOAD ================= */
 
@@ -88,8 +97,10 @@ async function loadStock(range = "1y") {
     ? fmt(data.meta.dividendYieldPct) + "%"
     : "—";
 
-  requestAnimationFrame(() => {
-    drawChart(qs("chart"), data.prices);
+  setTimeout(() => {
+  drawChart(qs("chart"), data.prices);
+}, 50);
+
   });
 }
 

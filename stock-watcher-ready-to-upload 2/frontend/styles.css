@@ -251,3 +251,49 @@ body.home {
 .watchlist-card:hover {
   background: #1f1f2e;
 }
+/* ---------- Branding ---------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-img {
+  height: 28px;
+  width: auto;
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ---------- Hero Branding ---------- */
+
+.hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hero-brand img {
+  width: 72px;
+  height: auto;
+}
+
+.hero-brand h1 {
+  font-size: 42px;
+  margin: 0;
+}
+
+/* ---------- Tagline ---------- */
+
+.tagline {
+  font-size: 18px;
+  color: #aaa;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}

@@ -17,16 +17,21 @@
   </header>
 
   <section class="controls">
-    <input
-      id="tickers"
-      type="text"
-      placeholder="AAPL MSFT NVDA TSLA"
-    />
+  <input
+    id="tickers"
+    type="text"
+    placeholder="AAPL MSFT NVDA TSLA"
+  />
 
-    <button onclick="load()">Load</button>
-    <button onclick="saveWatchlist()">Save</button>
-    <button onclick="loadWatchlist()">Load</button>
-  </section>
+  <!-- Primary action: icon -->
+  <button class="icon-btn" onclick="load()" title="Load tickers">
+    🔍
+  </button>
+
+  <!-- Secondary actions -->
+  <button onclick="saveWatchlist()">Save</button>
+  <button onclick="loadWatchlist()">Watchlist</button>
+</section>
 
   <div id="table"></div>
 

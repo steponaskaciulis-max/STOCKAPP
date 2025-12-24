@@ -15,8 +15,8 @@ app.add_middleware(
 @app.get("/metrics")
 def metrics(tickers: List[str] = Query(...)):
     return {"data": [one_ticker(t.upper()) for t in tickers]}
-    
-    @app.get("/")
+
+@app.get("/")
 def root():
     return {
         "status": "ok",

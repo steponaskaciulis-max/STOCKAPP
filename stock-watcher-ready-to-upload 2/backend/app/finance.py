@@ -34,7 +34,6 @@ def compute_eps_growth(tk):
 
         years = len(eps_values) - 1
         growth = (end / start) ** (1 / years) - 1
-
         return growth * 100
     except Exception:
         return None
@@ -49,33 +48,29 @@ def one_ticker(ticker):
 
     pe = info.get("trailingPE") or info.get("forwardPE")
     eps = info.get("trailingEps")
-
     high_52w = info.get("fiftyTwoWeekHigh")
 
-    # ---------- Dividend yield (ROBUST FIX) ----------
+    # ---------- Dividend yield (robust) ----------
     dividend_yield = info.get("dividendYield")
     dividend_pct = None
-
     if dividend_yield is not None:
-        try:
-            # If < 0.1 → fraction (0.0075 = 0.75%)
-            # Else → already percent (0.75 = 0.75%)
-            dividend_pct = (
-                dividend_yield * 100
-                if dividend_yield < 0.1
-                else dividend_yield
-            )
-        except Exception:
-            dividend_pct = None
+        dividend_pct = dividend_yield * 100 if dividend_yield < 0.1 else dividend_yield
 
     # ---------- Historical prices ----------
-    hist_1w = tk.history(period="7d", interval="1d")
+    hist_5d = tk.history(period="5d", interval="1d")
     hist_1m = tk.history(period="1mo", interval="1d")
     hist_1y = tk.history(period="1y", interval="1d")
 
+    # Daily change (%)
+    daily = (
+        pct_change(hist_5d["Close"].iloc[-2], hist_5d["Close"].iloc[-1])
+        if len(hist_5d) >= 2
+        else None
+    )
+
     weekly = (
-        pct_change(hist_1w["Close"].iloc[0], hist_1w["Close"].iloc[-1])
-        if len(hist_1w) >= 2
+        pct_change(hist_1m["Close"].iloc[-6], hist_1m["Close"].iloc[-1])
+        if len(hist_1m) >= 6
         else None
     )
 
@@ -93,15 +88,14 @@ def one_ticker(ticker):
         spark = [float(x) for x in hist_1m["Close"].tail(30)]
 
     eps_growth_pct = compute_eps_growth(tk)
-
-    derived_peg = None
-    if pe is not None and eps_growth_pct and eps_growth_pct > 0:
-        derived_peg = pe / eps_growth_pct
+    derived_peg = pe / eps_growth_pct if pe and eps_growth_pct and eps_growth_pct > 0 else None
 
     return {
         "ticker": ticker,
         "sector": sector,
+
         "price": safe(price),
+        "dailyChangePct": safe(daily),
 
         "pe": safe(pe),
         "peg": safe(derived_peg),

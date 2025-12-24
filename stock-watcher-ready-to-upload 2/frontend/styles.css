@@ -82,3 +82,50 @@ tbody tr:hover {
 svg {
   display: block;
 }
+/* ---------- Header ---------- */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.topbar p {
+  margin: 4px 0 0;
+  color: #888;
+  font-size: 13px;
+}
+
+/* ---------- Controls ---------- */
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.controls input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.controls button {
+  padding: 10px 14px;
+}
+
+/* ---------- Table polish ---------- */
+
+tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}

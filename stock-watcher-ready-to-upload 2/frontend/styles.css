@@ -494,3 +494,22 @@ tbody tr:hover {
 .sticky.company {
   left: 80px; /* adjust based on ticker width */
 }
+button {
+  transition: all 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+.watchlist-card {
+  transition: all 0.2s ease;
+}
+
+.watchlist-card:hover {
+  background: rgba(255,255,255,0.04);
+  transform: translateY(-2px);
+}

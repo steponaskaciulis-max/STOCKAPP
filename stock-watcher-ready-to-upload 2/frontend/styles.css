@@ -672,11 +672,7 @@ img[alt*="Valyxis"] {
   display: block !important;
 }
 
-/* Safety: prevent giant SVGs or PNGs */
-svg,
-img {
-  max-height: 28px;
-}
+
 /* ===============================
    Yahoo Finance–Style Chart Box
    =============================== */

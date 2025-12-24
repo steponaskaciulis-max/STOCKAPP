@@ -139,27 +139,40 @@ function renderTable() {
 /* ---------- data loading ---------- */
 
 async function load() {
-  const tickers = document
-    .getElementById("tickers")
-    .value.trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const input = document.getElementById("tickers");
+  const btn = document.getElementById("loadBtn");
+  const icon = document.getElementById("loadIcon");
+  const spinner = document.getElementById("spinner");
 
+  const tickers = input.value.trim().split(/\s+/).filter(Boolean);
   if (tickers.length === 0) return;
 
-  const qs = tickers.map(t => `tickers=${t}`).join("&");
-  const r = await fetch(`${API}/metrics?${qs}`);
-  const j = await r.json();
+  // UI loading state
+  btn.disabled = true;
+  icon.classList.add("hidden");
+  spinner.classList.remove("hidden");
 
-  currentData = j.data;
-  sortKey = null;
-  sortAsc = true;
+  try {
+    const qs = tickers.map(t => `tickers=${t}`).join("&");
+    const r = await fetch(`${API}/metrics?${qs}`);
+    const j = await r.json();
 
-  renderTable();
+    currentData = j.data;
+    sortKey = null;
+    sortAsc = true;
 
-  const updated = document.getElementById("updated");
-  if (updated) {
-    updated.innerText = "Updated: " + new Date().toLocaleTimeString();
+    renderTable();
+
+    const updated = document.getElementById("updated");
+    if (updated) {
+      updated.innerText = "Updated: " + new Date().toLocaleTimeString();
+    }
+  } catch (err) {
+    alert("Failed to load data");
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add("hidden");
+    icon.classList.remove("hidden");
   }
 }
 
@@ -185,12 +198,20 @@ function loadWatchlist() {
   load();
 }
 
-/* ---------- auto load ---------- */
+/* ---------- keyboard shortcut ---------- */
 
 window.addEventListener("load", () => {
+  const input = document.getElementById("tickers");
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      load();
+    }
+  });
+
   const saved = localStorage.getItem("stockWatcherWatchlist");
   if (saved) {
-    document.getElementById("tickers").value = saved;
+    input.value = saved;
     load();
   }
 });

@@ -43,14 +43,21 @@ def one_ticker(ticker):
     tk = yf.Ticker(ticker)
     info = tk.info or {}
 
-    price = info.get("regularMarketPrice") or info.get("currentPrice")
+    # ---------- Identity ----------
+    company = (
+        info.get("longName")
+        or info.get("shortName")
+        or ticker
+    )
+
     sector = info.get("sector") or "Other"
+    price = info.get("regularMarketPrice") or info.get("currentPrice")
 
     pe = info.get("trailingPE") or info.get("forwardPE")
     eps = info.get("trailingEps")
     high_52w = info.get("fiftyTwoWeekHigh")
 
-    # ---------- Dividend yield (robust) ----------
+    # ---------- Dividend yield ----------
     dividend_yield = info.get("dividendYield")
     dividend_pct = None
     if dividend_yield is not None:
@@ -61,7 +68,6 @@ def one_ticker(ticker):
     hist_1m = tk.history(period="1mo", interval="1d")
     hist_1y = tk.history(period="1y", interval="1d")
 
-    # Daily change (%)
     daily = (
         pct_change(hist_5d["Close"].iloc[-2], hist_5d["Close"].iloc[-1])
         if len(hist_5d) >= 2
@@ -88,10 +94,15 @@ def one_ticker(ticker):
         spark = [float(x) for x in hist_1m["Close"].tail(30)]
 
     eps_growth_pct = compute_eps_growth(tk)
-    derived_peg = pe / eps_growth_pct if pe and eps_growth_pct and eps_growth_pct > 0 else None
+    derived_peg = (
+        pe / eps_growth_pct
+        if pe and eps_growth_pct and eps_growth_pct > 0
+        else None
+    )
 
     return {
         "ticker": ticker,
+        "company": company,
         "sector": sector,
 
         "price": safe(price),
@@ -103,8 +114,6 @@ def one_ticker(ticker):
         "epsGrowthPct": safe(eps_growth_pct),
         "dividendYieldPct": safe(dividend_pct),
 
-        "high52w": safe(high_52w),
-        "pctFrom52wHigh": safe(pct_change(high_52w, price)),
         "weeklyChangePct": safe(weekly),
         "monthlyChangePct": safe(monthly),
 

@@ -1,4 +1,33 @@
-<input id="tickers" placeholder="AAPL MSFT NVDA TSLA" />
-<button onclick="load()">Load</button>
-<button onclick="saveWatchlist()">Save Watchlist</button>
-<button onclick="loadWatchlist()">Load Watchlist</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stock Watcher</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <h1>📊 Stock Watcher</h1>
+
+  <div style="margin-bottom: 12px;">
+    <input
+      id="tickers"
+      type="text"
+      placeholder="AAPL MSFT NVDA TSLA"
+      style="margin-right: 6px;"
+    />
+
+    <button onclick="load()">Load</button>
+    <button onclick="saveWatchlist()">Save Watchlist</button>
+    <button onclick="loadWatchlist()">Load Watchlist</button>
+  </div>
+
+  <!-- Table container -->
+  <div id="table"></div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

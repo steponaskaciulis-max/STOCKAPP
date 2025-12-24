@@ -513,3 +513,93 @@ button:active {
   background: rgba(255,255,255,0.04);
   transform: translateY(-2px);
 }
+.chart-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ===== HEADER ===== */
+.stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 16px;
+}
+
+.stock-title h1 {
+  font-size: 32px;
+  margin: 0;
+}
+
+.stock-meta {
+  color: #9aa0a6;
+  font-size: 14px;
+}
+
+.stock-price {
+  text-align: right;
+}
+
+.stock-price .price {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.stock-price .change {
+  font-size: 14px;
+}
+
+.change.positive { color: #22c55e; }
+.change.negative { color: #ef4444; }
+
+/* ===== CHART ===== */
+.chart-section {
+  margin-top: 24px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.chart-controls .tf {
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.chart-controls .tf.active {
+  color: #4f8cff;
+  border-bottom: 2px solid #4f8cff;
+}
+
+.chart-container {
+  height: 420px;
+  background: #0b0e14;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 32px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+
+.stats-grid span {
+  color: #9aa0a6;
+}
+
+.stats-grid strong {
+  display: block;
+  font-size: 16px;
+  color: #fff;
+}

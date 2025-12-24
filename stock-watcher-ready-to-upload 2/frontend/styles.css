@@ -465,3 +465,32 @@ td.muted {
   color: #9aa0a6;
   font-size: 13px;
 }
+table {
+  border-collapse: collapse;
+}
+
+thead th {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: #cfcfcf;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.sticky {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #0c0f14;
+}
+
+.sticky.company {
+  left: 80px; /* adjust based on ticker width */
+}

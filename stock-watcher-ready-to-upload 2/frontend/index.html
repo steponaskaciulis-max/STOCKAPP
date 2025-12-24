@@ -8,26 +8,28 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <header class="topbar">
+    <div>
+      <h1>Stock Dashboard</h1>
+      <p>Live market snapshot · Valuation · Momentum · Yield</p>
+    </div>
+    <div id="updated"></div>
+  </header>
 
-  <h1>📊 Stock Watcher</h1>
-
-  <div style="margin-bottom: 12px;">
+  <section class="controls">
     <input
       id="tickers"
       type="text"
       placeholder="AAPL MSFT NVDA TSLA"
-      style="margin-right: 6px;"
     />
 
     <button onclick="load()">Load</button>
-    <button onclick="saveWatchlist()">Save Watchlist</button>
-    <button onclick="loadWatchlist()">Load Watchlist</button>
-  </div>
+    <button onclick="saveWatchlist()">Save</button>
+    <button onclick="loadWatchlist()">Load</button>
+  </section>
 
-  <!-- Table container -->
   <div id="table"></div>
 
-  <!-- JavaScript -->
   <script src="script.js"></script>
 </body>
 </html>

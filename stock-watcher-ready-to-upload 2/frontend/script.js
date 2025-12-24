@@ -25,13 +25,11 @@ function sparkline(values, width = 90, height = 24) {
   const max = Math.max(...values);
   const range = max - min || 1;
 
-  const pts = values
-    .map((v, i) => {
-      const x = (i / (values.length - 1)) * width;
-      const y = height - ((v - min) / range) * height;
-      return `${x},${y}`;
-    })
-    .join(" ");
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(" ");
 
   const trendUp = values[values.length - 1] >= values[0];
   const color = trendUp ? "#3ddc84" : "#ff6b6b";
@@ -85,10 +83,18 @@ function renderTable() {
           <th onclick="sortBy('ticker')">Ticker</th>
           <th>Spark</th>
           <th onclick="sortBy('sector')">Sector</th>
+
           <th onclick="sortBy('price')">Price</th>
+
           <th onclick="sortBy('pe')">P/E</th>
+          <th onclick="sortBy('peg')">PEG</th>
+
+          <th onclick="sortBy('eps')">EPS</th>
+          <th onclick="sortBy('dividendYieldPct')">Div %</th>
+
           <th onclick="sortBy('high52w')">52W High</th>
           <th onclick="sortBy('pctFrom52wHigh')">% from 52W</th>
+
           <th onclick="sortBy('weeklyChangePct')">1W %</th>
           <th onclick="sortBy('monthlyChangePct')">1M %</th>
         </tr>
@@ -102,10 +108,18 @@ function renderTable() {
         <td>${s.ticker}</td>
         <td>${sparkline(s.spark)}</td>
         <td>${s.sector || "—"}</td>
+
         <td>${fmt(s.price)}</td>
+
         <td>${fmt(s.pe)}</td>
+        <td>${fmt(s.peg)}</td>
+
+        <td>${fmt(s.eps)}</td>
+        <td>${fmt(s.dividendYieldPct)}%</td>
+
         <td>${fmt(s.high52w)}</td>
         <td class="${cls(s.pctFrom52wHigh)}">${fmt(s.pctFrom52wHigh)}%</td>
+
         <td class="${cls(s.weeklyChangePct)}">${fmt(s.weeklyChangePct)}%</td>
         <td class="${cls(s.monthlyChangePct)}">${fmt(s.monthlyChangePct)}%</td>
       </tr>

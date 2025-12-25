@@ -130,18 +130,19 @@ const lastPoint = points[points.length - 1];
 const lastY = lastPoint.y;
 const lastPrice = lastPoint.price;
 
-   const priceBoxWidth = 72;
-const priceBoxPadding = 10;
+   const priceBoxWidth = 76;
+const priceBoxHeight = 28;
+const priceBoxPadding = 12;
 
-// FIX: anchor price box to chart inset, not data point
+// Fixed X inset (correct)
 const priceBoxX = width - M.right - priceBoxWidth - priceBoxPadding;
 
-
-// Clamp Y so it never overflows top/bottom
+// Vertical clamp + small lift so it never overlaps the line
 const priceBoxY = Math.min(
-  Math.max(lastY - 14, M.top + 4),
-  height - M.bottom - 32
+  Math.max(lastY - priceBoxHeight / 2, M.top + 6),
+  height - M.bottom - priceBoxHeight - 6
 );
+
 
    
   // ---- Axis ticks ----
@@ -235,6 +236,40 @@ const priceBoxY = Math.min(
       />
 
       <!-- OUTLINE (behind) -->
+     <line
+  x1="${M.left}"
+  x2="${width - M.right}"
+  y1="${lastY}"
+  y2="${lastY}"
+  stroke="rgba(255,255,255,0.12)"
+  stroke-dasharray="4 4"
+/>
+<circle
+  cx="${lastPoint.x}"
+  cy="${lastY}"
+  r="4"
+  fill="#2ecc71"
+/>
+<g transform="translate(${priceBoxX}, ${priceBoxY})">
+  <rect
+    width="${priceBoxWidth}"
+    height="${priceBoxHeight}"
+    rx="6"
+    fill="#0b0f14"
+    stroke="#2ecc71"
+    stroke-width="1.5"
+  />
+  <text
+    x="${priceBoxWidth / 2}"
+    y="${priceBoxHeight / 2 + 4}"
+    fill="#e5e7eb"
+    font-size="13"
+    font-weight="600"
+    text-anchor="middle"
+  >
+    $${lastPrice.toFixed(2)}
+  </text>
+</g>
       <polyline
         points="${svgPoints}"
         fill="none"

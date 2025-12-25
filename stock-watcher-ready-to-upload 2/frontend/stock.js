@@ -4,11 +4,12 @@
 
 const params = new URLSearchParams(window.location.search);
 const TICKER = (params.get("ticker") || "").toUpperCase();
-
-// Backend
 const API_BASE = "https://stockapp-kym2.onrender.com";
 
-// DOM
+/* =========================
+   DOM
+   ========================= */
+
 const chartEl = document.getElementById("chart");
 const priceEl = document.getElementById("price");
 const changeEl = document.getElementById("change");
@@ -26,52 +27,26 @@ const divEl = document.getElementById("dividend");
    Helpers
    ========================= */
 
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
+const fmt = (n, d = 2) =>
+  Number.isFinite(Number(n)) ? Number(n).toFixed(d) : "—";
 
-function formatDateShort(iso) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric"
-  });
-}
+const money = n =>
+  Number.isFinite(Number(n)) ? `$${Number(n).toFixed(2)}` : "$—";
 
-function fmt(n, d = 2) {
-  const num = Number(n);
-  return Number.isFinite(num) ? num.toFixed(d) : "—";
-}
+const shortDate = t =>
+  new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
-function fmtMoney(n) {
-  const num = Number(n);
-  return Number.isFinite(num) ? `$${num.toFixed(2)}` : "$—";
-}
-
-function fmtAxisMoney(n) {
-  const num = Number(n);
-  if (!Number.isFinite(num)) return "—";
-  return `$${num.toFixed(0)}`;
-}
-
-function colorize(el, v) {
+const colorize = (el, v) => {
   if (!el) return;
   el.style.color = v > 0 ? "#2ecc71" : v < 0 ? "#e74c3c" : "#aab2c0";
-}
-
-function setText(el, v) {
-  if (el) el.textContent = v;
-}
+};
 
 /* =========================
-   Chart Renderer
+   Chart
    ========================= */
 
 function renderChart(data) {
-  if (!chartEl || !Array.isArray(data) || data.length < 2) {
+  if (!chartEl || !data?.length) {
     chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
     return;
   }
@@ -79,19 +54,18 @@ function renderChart(data) {
   chartEl.style.height = "420px";
 
   const rect = chartEl.getBoundingClientRect();
-  const width = Math.max(720, rect.width);
-  const height = Math.max(420, rect.height);
+  const width = Math.max(760, rect.width);
+  const height = 420;
 
-  const M = { left: 64, right: 24, top: 18, bottom: 38 };
+  const M = { left: 64, right: 32, top: 18, bottom: 40 };
   const plotW = width - M.left - M.right;
   const plotH = height - M.top - M.bottom;
 
-  const prices = data.map(d => Number(d.close)).filter(Number.isFinite);
+  const prices = data.map(d => d.close);
   let min = Math.min(...prices);
   let max = Math.max(...prices);
 
-  const minRange = max * 0.06;
-  const range = Math.max(max - min, minRange, 1);
+  const range = Math.max(max - min, max * 0.06, 1);
   const mid = (min + max) / 2;
   min = mid - range / 2;
   max = mid + range / 2;
@@ -106,25 +80,36 @@ function renderChart(data) {
     time: d.t
   }));
 
-  const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
+  const path = points.map(p => `${p.x},${p.y}`).join(" ");
   const last = points[points.length - 1];
 
-  // Price label positioning (FIXED)
-  const labelW = 72;
-  const labelH = 28;
+  /* =========================
+     PRICE LABEL (FIXED)
+     ========================= */
 
-  const labelX = Math.min(
-    Math.max(last.x + 12, M.left),
-    width - M.right - labelW
-  );
+  const labelW = 74;
+  const labelH = 30;
+
+  const placeRight = last.x < width - M.right - labelW - 10;
+
+  const labelX = placeRight
+    ? last.x + 10
+    : last.x - labelW - 10;
 
   const labelY = Math.min(
     Math.max(last.y - labelH / 2, M.top + 4),
     height - M.bottom - labelH - 4
   );
 
+  /* =========================
+     AXES
+     ========================= */
+
+  const yTicks = 5;
+  const xTicks = 3;
+
   chartEl.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
   <defs>
     <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.28"/>
@@ -132,56 +117,56 @@ function renderChart(data) {
     </linearGradient>
   </defs>
 
-  ${[0,1,2,3,4].map(i => {
-    const y = yScale(min + (i/4)*(max-min));
-    return `<line x1="${M.left}" x2="${width-M.right}" y1="${y}" y2="${y}"
-      stroke="rgba(255,255,255,0.08)"/>`;
+  <!-- Y GRID + LABELS -->
+  ${Array.from({ length: yTicks }).map((_, i) => {
+    const p = min + (i / (yTicks - 1)) * (max - min);
+    const y = yScale(p);
+    return `
+      <line x1="${M.left}" x2="${width - M.right}" y1="${y}" y2="${y}"
+        stroke="rgba(255,255,255,0.08)"/>
+      <text x="${M.left - 10}" y="${y + 4}" text-anchor="end"
+        fill="#9aa3b2" font-size="12">$${p.toFixed(0)}</text>
+    `;
   }).join("")}
 
+  <!-- X LABELS -->
+  ${Array.from({ length: xTicks }).map((_, i) => {
+    const idx = Math.floor((i / (xTicks - 1)) * (data.length - 1));
+    const x = xScale(idx);
+    return `
+      <text x="${x}" y="${height - 10}" text-anchor="middle"
+        fill="#9aa3b2" font-size="12">
+        ${shortDate(data[idx].t)}
+      </text>
+    `;
+  }).join("")}
+
+  <!-- AREA -->
   <polygon
-    points="${M.left},${height-M.bottom} ${svgPoints} ${width-M.right},${height-M.bottom}"
+    points="${M.left},${height - M.bottom} ${path} ${width - M.right},${height - M.bottom}"
     fill="url(#fillGrad)"
   />
 
-  <polyline
-    points="${svgPoints}"
-    fill="none"
-    stroke="rgba(0,0,0,0.55)"
-    stroke-width="6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <!-- OUTLINE -->
+  <polyline points="${path}" fill="none"
+    stroke="rgba(0,0,0,0.5)" stroke-width="6"
+    stroke-linecap="round" stroke-linejoin="round"/>
 
-  <polyline
-    points="${svgPoints}"
-    fill="none"
-    stroke="#4c8dff"
-    stroke-width="3"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <!-- MAIN LINE -->
+  <polyline points="${path}" fill="none"
+    stroke="#4c8dff" stroke-width="3"
+    stroke-linecap="round" stroke-linejoin="round"/>
 
+  <!-- LAST POINT -->
   <circle cx="${last.x}" cy="${last.y}" r="5" fill="#2ecc71"/>
 
-  <rect
-    x="${labelX}"
-    y="${labelY}"
-    width="${labelW}"
-    height="${labelH}"
-    rx="6"
-    fill="#0b0b0f"
-    stroke="#2ecc71"
-  />
+  <!-- PRICE BOX -->
+  <rect x="${labelX}" y="${labelY}" width="${labelW}" height="${labelH}"
+    rx="6" fill="#0b0b0f" stroke="#2ecc71"/>
 
-  <text
-    x="${labelX + labelW / 2}"
-    y="${labelY + 18}"
-    text-anchor="middle"
-    fill="#e5e7eb"
-    font-size="12"
-    font-weight="600"
-  >
-    ${fmtMoney(last.price)}
+  <text x="${labelX + labelW / 2}" y="${labelY + 19}"
+    text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="600">
+    ${money(last.price)}
   </text>
 </svg>`;
 }
@@ -190,39 +175,34 @@ function renderChart(data) {
    Load Data
    ========================= */
 
-async function loadStock(period="1y") {
-  if (!TICKER) return;
-
+async function loadStock(period = "1y") {
   try {
-    chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">Loading chart…</div>`;
-
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">Loading chart…</div>`;
     const res = await fetch(`${API_BASE}/history?ticker=${TICKER}&period=${period}`);
-    if (!res.ok) throw new Error("API error");
-
     const json = await res.json();
-    const meta = json.meta || {};
-    const prices = json.prices || [];
 
-    setText(nameEl, meta.longName || TICKER);
-    setText(sectorEl, meta.sector || "—");
-    setText(priceEl, fmtMoney(meta.price));
+    const meta = json.meta;
+    const prices = json.prices;
 
-    if (prices.length >= 2) {
+    nameEl.textContent = meta.longName || TICKER;
+    sectorEl.textContent = meta.sector || "—";
+    priceEl.textContent = money(meta.price);
+
+    if (prices.length > 1) {
       const diff = prices.at(-1).close - prices.at(-2).close;
       const pct = (diff / prices.at(-2).close) * 100;
-      setText(changeEl, `${diff>=0?"+":""}${fmt(diff)} (${fmt(pct)}%)`);
+      changeEl.textContent = `${diff >= 0 ? "+" : ""}${fmt(diff)} (${fmt(pct)}%)`;
       colorize(changeEl, diff);
     }
 
-    setText(prevCloseEl, fmt(prices.at(-2)?.close));
-    setText(high52El, fmt(meta.high52w));
-    setText(peEl, fmt(meta.pe));
-    setText(pegEl, fmt(meta.peg));
-    setText(epsEl, fmt(meta.eps));
+    prevCloseEl.textContent = fmt(prices.at(-2)?.close);
+    high52El.textContent = fmt(meta.high52w);
+    peEl.textContent = fmt(meta.pe);
+    pegEl.textContent = fmt(meta.peg);
+    epsEl.textContent = fmt(meta.eps);
 
-    if (meta.dividendYieldPct != null) {
-      setText(divEl, `${fmt(meta.dividendYieldPct / 100, 2)}%`);
-    } else setText(divEl, "—");
+    if (meta.dividendYieldPct != null)
+      divEl.textContent = `${fmt(meta.dividendYieldPct / 100)}%`;
 
     renderChart(prices);
 

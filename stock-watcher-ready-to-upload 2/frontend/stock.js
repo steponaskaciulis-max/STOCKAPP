@@ -130,6 +130,21 @@ const lastPoint = points[points.length - 1];
 const lastY = lastPoint.y;
 const lastPrice = lastPoint.price;
 
+   const priceBoxOffset = 12;
+const priceBoxWidth = 72;
+
+// Clamp X so it never overflows right edge
+const priceBoxX = Math.min(
+  lastPoint.x + priceBoxOffset,
+  width - M.right - priceBoxWidth
+);
+
+// Clamp Y so it never overflows top/bottom
+const priceBoxY = Math.min(
+  Math.max(lastY - 14, M.top + 4),
+  height - M.bottom - 32
+);
+
    
   // ---- Axis ticks ----
   const yTicks = 4; // horizontal gridlines
@@ -247,11 +262,8 @@ const lastPrice = lastPoint.price;
 
 <!-- Last price label -->
 <rect
-  x="${width - M.right - 78}"
-  y="${Math.min(
-    Math.max(lastY - 14, M.top + 4),
-    height - M.bottom - 32
-  )}"
+  x="${priceBoxX}"
+  y="${priceBoxY}"
   rx="6"
   ry="6"
   width="72"
@@ -262,11 +274,8 @@ const lastPrice = lastPoint.price;
 />
 
 <text
-  x="${width - M.right - 42}"
-  y="${Math.min(
-    Math.max(lastY + 5, M.top + 16),
-    height - M.bottom - 10
-  )}"
+  x="${priceBoxX + priceBoxWidth / 2}"
+  y="${priceBoxY + 18}"
   fill="#e5e7eb"
   font-size="12"
   font-weight="600"

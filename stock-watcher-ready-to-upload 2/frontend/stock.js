@@ -29,11 +29,12 @@ let lastChartData = [];
    ========================= */
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function formatDateShort(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function fmt(n, d = 2) {
@@ -46,6 +47,14 @@ function fmtMoney(n, d = 2) {
   if (n == null) return "$—";
   const num = Number(n);
   return Number.isFinite(num) ? `$${num.toFixed(d)}` : "$—";
+}
+
+function fmtAxisMoney(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "—";
+  // simple compact-ish formatting
+  if (num >= 1000) return `$${(num / 1000).toFixed(1)}k`;
+  return `$${num.toFixed(0)}`;
 }
 
 function colorize(el, val) {
@@ -70,104 +79,167 @@ function renderChart(data) {
     return;
   }
 
-  // Force usable height
-  if (chartEl.clientHeight < 200) {
-    chartEl.style.height = "420px";
-  }
+  lastChartData = data;
+
+  // Ensure chart box has height (in case CSS is weird)
+  if (chartEl.clientHeight < 200) chartEl.style.height = "420px";
 
   const rect = chartEl.getBoundingClientRect();
-  const width = Math.max(720, rect.width);
-  const height = Math.max(420, rect.height);
+  const width = Math.max(720, Math.floor(rect.width || chartEl.clientWidth || 720));
+  const height = Math.max(420, Math.floor(rect.height || chartEl.clientHeight || 420));
 
-   // Inner padding so line never touches rounded edges
-   const PAD_TOP = 20;
-   const PAD_BOTTOM = 20;
-   const PAD_LEFT = 0;
-   const PAD_RIGHT = 0;
-
-   const innerHeight = height - PAD_TOP - PAD_BOTTOM;
-   const innerWidth = width - PAD_LEFT - PAD_RIGHT;
+  // ---- Plot margins for axes/labels ----
+  const M = { left: 64, right: 18, top: 18, bottom: 38 };
+  const plotW = Math.max(10, width - M.left - M.right);
+  const plotH = Math.max(10, height - M.top - M.bottom);
 
   const closes = data.map(d => Number(d.close)).filter(Number.isFinite);
+  if (closes.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+    return;
+  }
 
   let min = Math.min(...closes);
   let max = Math.max(...closes);
 
-   const PADDING_LEFT = 56;
-const PADDING_BOTTOM = 28;
-const CHART_WIDTH = width - PADDING_LEFT;
-const CHART_HEIGHT = height - PADDING_BOTTOM;
-
-  // Anti-flat scaling (Yahoo-style)
+  // Anti-flat scaling (keeps movement visible like Yahoo)
   const realRange = max - min;
-  const minVisibleRange = max * 0.06;
-  const range = Math.max(realRange, minVisibleRange);
+  const minVisibleRange = max * 0.06; // 6% of price
+  const range = Math.max(realRange, minVisibleRange, 1);
   const mid = (min + max) / 2;
   min = mid - range / 2;
   max = mid + range / 2;
 
-   const padding = (max - min) * 0.15;
+  const xScale = (i) => M.left + (i / (data.length - 1)) * plotW;
+  const yScale = (price) => M.top + ((max - price) / (max - min)) * plotH;
+
   const points = data.map((d, i) => {
-  const x = PADDING_LEFT + (i / (data.length - 1)) * CHART_WIDTH;
-  const y =
-    CHART_HEIGHT -
-    ((d.close - min) / (max - min)) * CHART_HEIGHT;
-  return { x, y, price: d.close, time: d.t };
-});
+    const price = Number(d.close);
+    return {
+      x: xScale(i),
+      y: yScale(price),
+      price,
+      time: d.t
+    };
+  });
 
+  const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
 
-   const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
+  // ---- Axis ticks ----
+  const yTicks = 4; // horizontal gridlines
+  const xTicks = 4; // vertical gridlines (visual only)
+  const yTickVals = Array.from({ length: yTicks + 1 }, (_, k) => min + (k / yTicks) * (max - min));
+
+  const xTickIdx = Array.from({ length: xTicks + 1 }, (_, k) => Math.round((k / xTicks) * (data.length - 1)));
+
+  // Labels: start/mid/end
+  const labelIdx = [
+    0,
+    Math.round((data.length - 1) / 2),
+    data.length - 1
+  ];
 
   chartEl.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
+          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.28"/>
           <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
         </linearGradient>
+
         <clipPath id="chartClip">
-  <rect
-    x="0"
-    y="0"
-    width="${width}"
-    height="${height}"
-    rx="14"
-    ry="14"
-  />
-</clipPath>
+          <rect x="0" y="0" width="${width}" height="${height}" rx="14" ry="14" />
+        </clipPath>
       </defs>
 
+      <!-- Grid: horizontal -->
+      ${yTickVals.map((v) => {
+        const y = yScale(v);
+        return `
+          <line x1="${M.left}" x2="${width - M.right}" y1="${y}" y2="${y}"
+                stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+        `;
+      }).join("")}
+
+      <!-- Grid: vertical -->
+      ${xTickIdx.map((idx) => {
+        const x = xScale(idx);
+        return `
+          <line x1="${x}" x2="${x}" y1="${M.top}" y2="${height - M.bottom}"
+                stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+        `;
+      }).join("")}
+
+      <!-- Y axis baseline -->
+      <line x1="${M.left}" x2="${M.left}" y1="${M.top}" y2="${height - M.bottom}"
+            stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+
+      <!-- X axis baseline -->
+      <line x1="${M.left}" x2="${width - M.right}" y1="${height - M.bottom}" y2="${height - M.bottom}"
+            stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+
+      <!-- Y labels -->
+      ${yTickVals.map((v) => {
+        const y = yScale(v);
+        return `
+          <text x="${M.left - 10}" y="${y + 4}"
+                text-anchor="end"
+                fill="rgba(244,247,255,0.70)"
+                font-size="12"
+                font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial">
+            ${fmtAxisMoney(v)}
+          </text>
+        `;
+      }).join("")}
+
+      <!-- X labels (start / mid / end) -->
+      ${labelIdx.map((idx) => {
+        const x = xScale(idx);
+        const y = height - 12;
+        const anchor = idx === 0 ? "start" : (idx === data.length - 1 ? "end" : "middle");
+        return `
+          <text x="${x}" y="${y}"
+                text-anchor="${anchor}"
+                fill="rgba(244,247,255,0.70)"
+                font-size="12"
+                font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial">
+            ${formatDateShort(data[idx].t)}
+          </text>
+        `;
+      }).join("")}
+
       <!-- Area -->
-     <polygon
-  clip-path="url(#chartClip)"
-  points="0,${height} ${svgPoints} ${width},${height}"
-  fill="url(#fillGrad)"
-/>
+      <polygon
+        clip-path="url(#chartClip)"
+        points="${M.left},${height - M.bottom} ${svgPoints} ${width - M.right},${height - M.bottom}"
+        fill="url(#fillGrad)"
+      />
 
+      <!-- OUTLINE (behind) -->
+      <polyline
+        points="${svgPoints}"
+        fill="none"
+        stroke="rgba(0,0,0,0.55)"
+        stroke-width="6"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        clip-path="url(#chartClip)"
+      />
 
-      <!-- Line -->
-     <!-- OUTLINE (drawn first, thicker & darker) -->
-<polyline
-  points="${svgPoints}"
-  fill="none"
-  stroke="rgba(76,141,255,0.35)"
-  stroke-width="4.5"
-  stroke-linejoin="round"
-  stroke-linecap="round"
-/>
-
-<!-- MAIN LINE (drawn on top) -->
-<polyline
-  points="${svgPoints}"
-  fill="none"
-  stroke="#4c8dff"
-  stroke-width="2.5"
-  stroke-linejoin="round"
-  stroke-linecap="round"
-/>
+      <!-- MAIN LINE -->
+      <polyline
+        points="${svgPoints}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="3"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        clip-path="url(#chartClip)"
+      />
 
       <!-- Crosshair -->
-      <line id="crosshair" y1="0" y2="${height}" stroke="#8892b0" stroke-dasharray="4" opacity="0" />
+      <line id="crosshair" y1="${M.top}" y2="${height - M.bottom}"
+            stroke="#8892b0" stroke-dasharray="4" opacity="0" />
 
       <!-- Hover point -->
       <circle id="hoverDot" r="5" fill="#fff" stroke="#4c8dff" stroke-width="2" opacity="0" />
@@ -178,13 +250,14 @@ const CHART_HEIGHT = height - PADDING_BOTTOM;
       pointer-events:none;
       background:#0b1220;
       color:#f4f7ff;
-      border:1px solid rgba(255,255,255,0.1);
-      border-radius:8px;
-      padding:8px 10px;
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:10px;
+      padding:10px 12px;
       font-size:12px;
       opacity:0;
-      transform:translate(-50%, -110%);
+      transform:translate(-50%, -120%);
       white-space:nowrap;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     "></div>
   `;
 
@@ -193,14 +266,19 @@ const CHART_HEIGHT = height - PADDING_BOTTOM;
   const dot = chartEl.querySelector("#hoverDot");
   const tooltip = chartEl.querySelector("#tooltip");
 
-  svg.addEventListener("mousemove", e => {
+  svg.addEventListener("mousemove", (e) => {
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const cursor = pt.matrixTransform(svg.getScreenCTM().inverse());
 
-    const idx = Math.round((cursor.x / width) * (points.length - 1));
-    const p = points[Math.max(0, Math.min(points.length - 1, idx))];
+    // Convert cursor.x to an index inside plot area
+    const t = (cursor.x - M.left) / plotW;
+    const idx = Math.round(t * (points.length - 1));
+    const clamped = Math.max(0, Math.min(points.length - 1, idx));
+    const p = points[clamped];
+
+    if (!p) return;
 
     crosshair.setAttribute("x1", p.x);
     crosshair.setAttribute("x2", p.x);
@@ -214,7 +292,7 @@ const CHART_HEIGHT = height - PADDING_BOTTOM;
     tooltip.style.left = `${p.x}px`;
     tooltip.style.top = `${p.y}px`;
     tooltip.innerHTML = `
-      <strong>$${p.price.toFixed(2)}</strong><br/>
+      <strong>${fmtMoney(p.price, 2)}</strong><br/>
       ${formatDate(p.time)}
     `;
   });
@@ -234,15 +312,12 @@ async function loadStock(period = "1y") {
   if (!TICKER) return;
 
   try {
-    // show loading state
     if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">Loading chart…</div>`;
 
     const url = `${API_BASE}/history?ticker=${encodeURIComponent(TICKER)}&period=${encodeURIComponent(period)}`;
     const res = await fetch(url);
 
-    if (!res.ok) {
-      throw new Error(`API error ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`API error ${res.status}`);
 
     const json = await res.json();
     const meta = json.meta || {};
@@ -252,14 +327,11 @@ async function loadStock(period = "1y") {
     setText(nameEl, meta.longName || TICKER);
     setText(sectorEl, meta.sector || "—");
 
-    // Price (top right)
-    if (meta.price != null) {
-      priceEl && (priceEl.textContent = fmtMoney(meta.price));
-    } else {
-      priceEl && (priceEl.textContent = "$—");
-    }
+    // Price
+    if (meta.price != null) setText(priceEl, fmtMoney(meta.price));
+    else setText(priceEl, "$—");
 
-    // Change (use last two points in the *current timeframe*)
+    // Change
     if (prices.length >= 2) {
       const last = Number(prices[prices.length - 1].close);
       const prev = Number(prices[prices.length - 2].close);
@@ -267,18 +339,16 @@ async function loadStock(period = "1y") {
       if (Number.isFinite(last) && Number.isFinite(prev) && prev !== 0) {
         const diff = last - prev;
         const pct = (diff / prev) * 100;
-
-        changeEl && (changeEl.textContent = `${diff >= 0 ? "+" : ""}${fmt(diff)} (${diff >= 0 ? "+" : ""}${fmt(pct)}%)`);
+        setText(changeEl, `${diff >= 0 ? "+" : ""}${fmt(diff)} (${diff >= 0 ? "+" : ""}${fmt(pct)}%)`);
         colorize(changeEl, diff);
       } else {
-        changeEl && (changeEl.textContent = "—");
+        setText(changeEl, "—");
       }
     } else {
-      changeEl && (changeEl.textContent = "—");
+      setText(changeEl, "—");
     }
 
     // Stats
-    // Previous close: best effort
     const prevClose =
       prices.length >= 2 ? prices[prices.length - 2].close :
       prices.length === 1 ? prices[0].close :
@@ -290,32 +360,19 @@ async function loadStock(period = "1y") {
     setText(pegEl, fmt(meta.peg));
     setText(epsEl, fmt(meta.eps));
 
-if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
-  const raw = Number(meta.dividendYieldPct);
+    // Dividend fix: backend returns "percent*100" sometimes -> normalize
+    if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
+      const raw = Number(meta.dividendYieldPct);
+      const percent = raw / 100; // 75 -> 0.75%
+      setText(divEl, `${fmt(percent, 2)}%`);
+    } else {
+      setText(divEl, "—");
+    }
 
-  /*
-    BACKEND REALITY CHECK:
-    - Backend already multiplied by 100
-    - So:
-        75   → 0.75%
-        2    → 0.02%
-        0.6  → 0.006%
-  */
-
-  const percent = raw / 100;
-
-  setText(divEl, `${fmt(percent, 2)}%`);
-} else {
-  setText(divEl, "—");
-}
-
-    // Render chart
     renderChart(prices);
   } catch (err) {
     console.error(err);
     if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#ff6b6b">Error loading chart</div>`;
-
-    // Don’t wipe your stats if the API fails; just show placeholders if needed
     if (priceEl && priceEl.textContent.trim() === "") priceEl.textContent = "$—";
     if (changeEl && changeEl.textContent.trim() === "") changeEl.textContent = "—";
   }

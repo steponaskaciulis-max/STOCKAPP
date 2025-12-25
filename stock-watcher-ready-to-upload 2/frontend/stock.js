@@ -118,6 +118,16 @@ function renderChart(data) {
           <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.35"/>
           <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
         </linearGradient>
+        <clipPath id="chartClip">
+  <rect
+    x="0"
+    y="0"
+    width="${width}"
+    height="${height}"
+    rx="14"
+    ry="14"
+  />
+</clipPath>
       </defs>
 
       <!-- Area -->

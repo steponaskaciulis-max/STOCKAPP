@@ -234,8 +234,11 @@ const lastPrice = lastPoint.price;
 
 <!-- Last price dot -->
 <circle
-  cx="${width}"
-  cy="${lastY}"
+  cx="${points[points.length - 1].x}"
+  cy="${Math.min(
+    Math.max(lastY, M.top + 10),
+    height - M.bottom - 10
+  )}"
   r="5"
   fill="#2ecc71"
   stroke="#0b0b0f"
@@ -244,11 +247,14 @@ const lastPrice = lastPoint.price;
 
 <!-- Last price label -->
 <rect
-  x="${width - 70}"
-  y="${lastY - 14}"
+  x="${width - M.right - 78}"
+  y="${Math.min(
+    Math.max(lastY - 14, M.top + 4),
+    height - M.bottom - 32
+  )}"
   rx="6"
   ry="6"
-  width="68"
+  width="72"
   height="28"
   fill="#0b0b0f"
   stroke="#2ecc71"
@@ -256,8 +262,11 @@ const lastPrice = lastPoint.price;
 />
 
 <text
-  x="${width - 36}"
-  y="${lastY + 5}"
+  x="${width - M.right - 42}"
+  y="${Math.min(
+    Math.max(lastY + 5, M.top + 16),
+    height - M.bottom - 10
+  )}"
   fill="#e5e7eb"
   font-size="12"
   font-weight="600"

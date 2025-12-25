@@ -4,12 +4,11 @@
 
 const params = new URLSearchParams(window.location.search);
 const TICKER = (params.get("ticker") || "").toUpperCase();
+
+// ✅ IMPORTANT: Your backend (Render)
 const API_BASE = "https://stockapp-kym2.onrender.com";
 
-/* =========================
-   DOM
-   ========================= */
-
+// DOM
 const chartEl = document.getElementById("chart");
 const priceEl = document.getElementById("price");
 const changeEl = document.getElementById("change");
@@ -23,152 +22,336 @@ const pegEl = document.getElementById("peg");
 const epsEl = document.getElementById("eps");
 const divEl = document.getElementById("dividend");
 
+let lastChartData = [];
+
 /* =========================
    Helpers
    ========================= */
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
 
-const fmt = (n, d = 2) =>
-  Number.isFinite(Number(n)) ? Number(n).toFixed(d) : "—";
+function formatDateShort(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
-const money = n =>
-  Number.isFinite(Number(n)) ? `$${Number(n).toFixed(2)}` : "$—";
+function fmt(n, d = 2) {
+  if (n == null) return "—";
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toFixed(d) : "—";
+}
 
-const shortDate = t =>
-  new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function fmtMoney(n, d = 2) {
+  if (n == null) return "$—";
+  const num = Number(n);
+  return Number.isFinite(num) ? `$${num.toFixed(d)}` : "$—";
+}
 
-const colorize = (el, v) => {
+function fmtAxisMoney(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "—";
+  // simple compact-ish formatting
+  if (num >= 1000) return `$${(num / 1000).toFixed(1)}k`;
+  return `$${num.toFixed(0)}`;
+}
+
+function colorize(el, val) {
   if (!el) return;
-  el.style.color = v > 0 ? "#2ecc71" : v < 0 ? "#e74c3c" : "#aab2c0";
-};
+  if (val > 0) el.style.color = "#2ecc71";
+  else if (val < 0) el.style.color = "#e74c3c";
+  else el.style.color = "#aab2c0";
+}
+
+function setText(el, value) {
+  if (!el) return;
+  el.textContent = value;
+}
 
 /* =========================
-   Chart
+   Chart (SVG)
    ========================= */
 
 function renderChart(data) {
-  if (!chartEl || !data?.length) {
+  if (!chartEl || !Array.isArray(data) || data.length < 2) {
     chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
     return;
   }
 
-  chartEl.style.height = "420px";
+  lastChartData = data;
+
+  // Ensure chart box has height (in case CSS is weird)
+  if (chartEl.clientHeight < 200) chartEl.style.height = "420px";
 
   const rect = chartEl.getBoundingClientRect();
-  const width = Math.max(760, rect.width);
-  const height = 420;
+  const width = Math.max(720, Math.floor(rect.width || chartEl.clientWidth || 720));
+  const height = Math.max(420, Math.floor(rect.height || chartEl.clientHeight || 420));
 
-  const M = { left: 64, right: 32, top: 18, bottom: 40 };
-  const plotW = width - M.left - M.right;
-  const plotH = height - M.top - M.bottom;
+  // ---- Plot margins for axes/labels ----
+  const M = { left: 64, right: 18, top: 18, bottom: 38 };
+  const plotW = Math.max(10, width - M.left - M.right);
+  const plotH = Math.max(10, height - M.top - M.bottom);
 
-  const prices = data.map(d => d.close);
-  let min = Math.min(...prices);
-  let max = Math.max(...prices);
+  const closes = data.map(d => Number(d.close)).filter(Number.isFinite);
+  if (closes.length < 2) {
+    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">No chart data</div>`;
+    return;
+  }
 
-  const range = Math.max(max - min, max * 0.06, 1);
+  let min = Math.min(...closes);
+  let max = Math.max(...closes);
+
+  // Anti-flat scaling (keeps movement visible like Yahoo)
+  const realRange = max - min;
+  const minVisibleRange = max * 0.06; // 6% of price
+  const range = Math.max(realRange, minVisibleRange, 1);
   const mid = (min + max) / 2;
   min = mid - range / 2;
   max = mid + range / 2;
 
-  const xScale = i => M.left + (i / (data.length - 1)) * plotW;
-  const yScale = p => M.top + ((max - p) / (max - min)) * plotH;
+  const xScale = (i) => M.left + (i / (data.length - 1)) * plotW;
+  const yScale = (price) => M.top + ((max - price) / (max - min)) * plotH;
 
-  const points = data.map((d, i) => ({
-    x: xScale(i),
-    y: yScale(d.close),
-    price: d.close,
-    time: d.t
-  }));
+  const points = data.map((d, i) => {
+    const price = Number(d.close);
+    return {
+      x: xScale(i),
+      y: yScale(price),
+      price,
+      time: d.t
+    };
+  });
 
-  const path = points.map(p => `${p.x},${p.y}`).join(" ");
-  const last = points[points.length - 1];
+  const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
 
-  /* =========================
-     PRICE LABEL (FIXED)
-     ========================= */
+   // Last point helpers (FIXES chart crash)
+const lastPoint = points[points.length - 1];
+const lastY = lastPoint.y;
+const lastPrice = lastPoint.price;
 
-  const labelW = 74;
-  const labelH = 30;
+   
+  // ---- Axis ticks ----
+  const yTicks = 4; // horizontal gridlines
+  const xTicks = 4; // vertical gridlines (visual only)
+  const yTickVals = Array.from({ length: yTicks + 1 }, (_, k) => min + (k / yTicks) * (max - min));
 
-  const placeRight = last.x < width - M.right - labelW - 10;
+  const xTickIdx = Array.from({ length: xTicks + 1 }, (_, k) => Math.round((k / xTicks) * (data.length - 1)));
 
-  const labelX = placeRight
-    ? last.x + 10
-    : last.x - labelW - 10;
-
-  const labelY = Math.min(
-    Math.max(last.y - labelH / 2, M.top + 4),
-    height - M.bottom - labelH - 4
-  );
-
-  /* =========================
-     AXES
-     ========================= */
-
-  const yTicks = 5;
-  const xTicks = 3;
+  // Labels: start/mid/end
+  const labelIdx = [
+    0,
+    Math.round((data.length - 1) / 2),
+    data.length - 1
+  ];
 
   chartEl.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
-  <defs>
-    <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.28"/>
-      <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
+    <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4c8dff" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#4c8dff" stop-opacity="0"/>
+        </linearGradient>
 
-  <!-- Y GRID + LABELS -->
-  ${Array.from({ length: yTicks }).map((_, i) => {
-    const p = min + (i / (yTicks - 1)) * (max - min);
-    const y = yScale(p);
-    return `
-      <line x1="${M.left}" x2="${width - M.right}" y1="${y}" y2="${y}"
-        stroke="rgba(255,255,255,0.08)"/>
-      <text x="${M.left - 10}" y="${y + 4}" text-anchor="end"
-        fill="#9aa3b2" font-size="12">$${p.toFixed(0)}</text>
+        <clipPath id="chartClip">
+          <rect x="0" y="0" width="${width}" height="${height}" rx="14" ry="14" />
+        </clipPath>
+      </defs>
+
+      <!-- Grid: horizontal -->
+      ${yTickVals.map((v) => {
+        const y = yScale(v);
+        return `
+          <line x1="${M.left}" x2="${width - M.right}" y1="${y}" y2="${y}"
+                stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+        `;
+      }).join("")}
+
+      <!-- Grid: vertical -->
+      ${xTickIdx.map((idx) => {
+        const x = xScale(idx);
+        return `
+          <line x1="${x}" x2="${x}" y1="${M.top}" y2="${height - M.bottom}"
+                stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+        `;
+      }).join("")}
+
+      <!-- Y axis baseline -->
+      <line x1="${M.left}" x2="${M.left}" y1="${M.top}" y2="${height - M.bottom}"
+            stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+
+      <!-- X axis baseline -->
+      <line x1="${M.left}" x2="${width - M.right}" y1="${height - M.bottom}" y2="${height - M.bottom}"
+            stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+
+      <!-- Y labels -->
+      ${yTickVals.map((v) => {
+        const y = yScale(v);
+        return `
+          <text x="${M.left - 10}" y="${y + 4}"
+                text-anchor="end"
+                fill="rgba(244,247,255,0.70)"
+                font-size="12"
+                font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial">
+            ${fmtAxisMoney(v)}
+          </text>
+        `;
+      }).join("")}
+
+      <!-- X labels (start / mid / end) -->
+      ${labelIdx.map((idx) => {
+        const x = xScale(idx);
+        const y = height - 12;
+        const anchor = idx === 0 ? "start" : (idx === data.length - 1 ? "end" : "middle");
+        return `
+          <text x="${x}" y="${y}"
+                text-anchor="${anchor}"
+                fill="rgba(244,247,255,0.70)"
+                font-size="12"
+                font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial">
+            ${formatDateShort(data[idx].t)}
+          </text>
+        `;
+      }).join("")}
+
+      <!-- Area -->
+      <polygon
+        clip-path="url(#chartClip)"
+        points="${M.left},${height - M.bottom} ${svgPoints} ${width - M.right},${height - M.bottom}"
+        fill="url(#fillGrad)"
+      />
+
+      <!-- OUTLINE (behind) -->
+      <polyline
+        points="${svgPoints}"
+        fill="none"
+        stroke="rgba(0,0,0,0.55)"
+        stroke-width="6"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        clip-path="url(#chartClip)"
+      />
+
+<!-- Last price dot -->
+<circle
+  cx="${points[points.length - 1].x}"
+  cy="${Math.min(
+    Math.max(lastY, M.top + 10),
+    height - M.bottom - 10
+  )}"
+  r="5"
+  fill="#2ecc71"
+  stroke="#0b0b0f"
+  stroke-width="2"
+/>
+
+<!-- Last price label -->
+<rect
+  x="${width - M.right - 78}"
+  y="${Math.min(
+    Math.max(lastY - 14, M.top + 4),
+    height - M.bottom - 32
+  )}"
+  rx="6"
+  ry="6"
+  width="72"
+  height="28"
+  fill="#0b0b0f"
+  stroke="#2ecc71"
+  stroke-width="1"
+/>
+
+<text
+  x="${width - M.right - 42}"
+  y="${Math.min(
+    Math.max(lastY + 5, M.top + 16),
+    height - M.bottom - 10
+  )}"
+  fill="#e5e7eb"
+  font-size="12"
+  font-weight="600"
+  text-anchor="middle"
+>
+  ${lastPrice.toFixed(2)}
+</text>
+
+
+      <!-- MAIN LINE -->
+      <polyline
+        points="${svgPoints}"
+        fill="none"
+        stroke="#4c8dff"
+        stroke-width="3"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        clip-path="url(#chartClip)"
+      />
+
+      <!-- Crosshair -->
+      <line id="crosshair" y1="${M.top}" y2="${height - M.bottom}"
+            stroke="#8892b0" stroke-dasharray="4" opacity="0" />
+
+      <!-- Hover point -->
+      <circle id="hoverDot" r="5" fill="#fff" stroke="#4c8dff" stroke-width="2" opacity="0" />
+    </svg>
+
+    <div id="tooltip" style="
+      position:absolute;
+      pointer-events:none;
+      background:#0b1220;
+      color:#f4f7ff;
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:12px;
+      opacity:0;
+      transform:translate(-50%, -120%);
+      white-space:nowrap;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    "></div>
+  `;
+
+  const svg = chartEl.querySelector("svg");
+  const crosshair = chartEl.querySelector("#crosshair");
+  const dot = chartEl.querySelector("#hoverDot");
+  const tooltip = chartEl.querySelector("#tooltip");
+
+  svg.addEventListener("mousemove", (e) => {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const cursor = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    // Convert cursor.x to an index inside plot area
+    const t = (cursor.x - M.left) / plotW;
+    const idx = Math.round(t * (points.length - 1));
+    const clamped = Math.max(0, Math.min(points.length - 1, idx));
+    const p = points[clamped];
+
+    if (!p) return;
+
+    crosshair.setAttribute("x1", p.x);
+    crosshair.setAttribute("x2", p.x);
+    crosshair.style.opacity = 1;
+
+    dot.setAttribute("cx", p.x);
+    dot.setAttribute("cy", p.y);
+    dot.style.opacity = 1;
+
+    tooltip.style.opacity = 1;
+    tooltip.style.left = `${p.x}px`;
+    tooltip.style.top = `${p.y}px`;
+    tooltip.innerHTML = `
+      <strong>${fmtMoney(p.price, 2)}</strong><br/>
+      ${formatDate(p.time)}
     `;
-  }).join("")}
+  });
 
-  <!-- X LABELS -->
-  ${Array.from({ length: xTicks }).map((_, i) => {
-    const idx = Math.floor((i / (xTicks - 1)) * (data.length - 1));
-    const x = xScale(idx);
-    return `
-      <text x="${x}" y="${height - 10}" text-anchor="middle"
-        fill="#9aa3b2" font-size="12">
-        ${shortDate(data[idx].t)}
-      </text>
-    `;
-  }).join("")}
-
-  <!-- AREA -->
-  <polygon
-    points="${M.left},${height - M.bottom} ${path} ${width - M.right},${height - M.bottom}"
-    fill="url(#fillGrad)"
-  />
-
-  <!-- OUTLINE -->
-  <polyline points="${path}" fill="none"
-    stroke="rgba(0,0,0,0.5)" stroke-width="6"
-    stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- MAIN LINE -->
-  <polyline points="${path}" fill="none"
-    stroke="#4c8dff" stroke-width="3"
-    stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- LAST POINT -->
-  <circle cx="${last.x}" cy="${last.y}" r="5" fill="#2ecc71"/>
-
-  <!-- PRICE BOX -->
-  <rect x="${labelX}" y="${labelY}" width="${labelW}" height="${labelH}"
-    rx="6" fill="#0b0b0f" stroke="#2ecc71"/>
-
-  <text x="${labelX + labelW / 2}" y="${labelY + 19}"
-    text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="600">
-    ${money(last.price)}
-  </text>
-</svg>`;
+  svg.addEventListener("mouseleave", () => {
+    crosshair.style.opacity = 0;
+    dot.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  });
 }
 
 /* =========================
@@ -176,56 +359,93 @@ function renderChart(data) {
    ========================= */
 
 async function loadStock(period = "1y") {
+  if (!TICKER) return;
+
   try {
-    chartEl.innerHTML = `<div style="padding:16px;color:#aaa">Loading chart…</div>`;
-    const res = await fetch(`${API_BASE}/history?ticker=${TICKER}&period=${period}`);
+    if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#aab2c0">Loading chart…</div>`;
+
+    const url = `${API_BASE}/history?ticker=${encodeURIComponent(TICKER)}&period=${encodeURIComponent(period)}`;
+    const res = await fetch(url);
+
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+
     const json = await res.json();
+    const meta = json.meta || {};
+    const prices = Array.isArray(json.prices) ? json.prices : [];
 
-    const meta = json.meta;
-    const prices = json.prices;
+    // Header
+    setText(nameEl, meta.longName || TICKER);
+    setText(sectorEl, meta.sector || "—");
 
-    nameEl.textContent = meta.longName || TICKER;
-    sectorEl.textContent = meta.sector || "—";
-    priceEl.textContent = money(meta.price);
+    // Price
+    if (meta.price != null) setText(priceEl, fmtMoney(meta.price));
+    else setText(priceEl, "$—");
 
-    if (prices.length > 1) {
-      const diff = prices.at(-1).close - prices.at(-2).close;
-      const pct = (diff / prices.at(-2).close) * 100;
-      changeEl.textContent = `${diff >= 0 ? "+" : ""}${fmt(diff)} (${fmt(pct)}%)`;
-      colorize(changeEl, diff);
+    // Change
+    if (prices.length >= 2) {
+      const last = Number(prices[prices.length - 1].close);
+      const prev = Number(prices[prices.length - 2].close);
+
+      if (Number.isFinite(last) && Number.isFinite(prev) && prev !== 0) {
+        const diff = last - prev;
+        const pct = (diff / prev) * 100;
+        setText(changeEl, `${diff >= 0 ? "+" : ""}${fmt(diff)} (${diff >= 0 ? "+" : ""}${fmt(pct)}%)`);
+        colorize(changeEl, diff);
+      } else {
+        setText(changeEl, "—");
+      }
+    } else {
+      setText(changeEl, "—");
     }
 
-    prevCloseEl.textContent = fmt(prices.at(-2)?.close);
-    high52El.textContent = fmt(meta.high52w);
-    peEl.textContent = fmt(meta.pe);
-    pegEl.textContent = fmt(meta.peg);
-    epsEl.textContent = fmt(meta.eps);
+    // Stats
+    const prevClose =
+      prices.length >= 2 ? prices[prices.length - 2].close :
+      prices.length === 1 ? prices[0].close :
+      null;
 
-    if (meta.dividendYieldPct != null)
-      divEl.textContent = `${fmt(meta.dividendYieldPct / 100)}%`;
+    setText(prevCloseEl, fmt(prevClose));
+    setText(high52El, fmt(meta.high52w));
+    setText(peEl, fmt(meta.pe));
+    setText(pegEl, fmt(meta.peg));
+    setText(epsEl, fmt(meta.eps));
+
+    // Dividend fix: backend returns "percent*100" sometimes -> normalize
+    if (meta.dividendYieldPct != null && Number.isFinite(Number(meta.dividendYieldPct))) {
+      const raw = Number(meta.dividendYieldPct);
+      const percent = raw / 100; // 75 -> 0.75%
+      setText(divEl, `${fmt(percent, 2)}%`);
+    } else {
+      setText(divEl, "—");
+    }
 
     renderChart(prices);
-
-  } catch {
-    chartEl.innerHTML = `<div style="padding:16px;color:#ff6b6b">Error loading chart</div>`;
+  } catch (err) {
+    console.error(err);
+    if (chartEl) chartEl.innerHTML = `<div style="padding:16px;color:#ff6b6b">Error loading chart</div>`;
+    if (priceEl && priceEl.textContent.trim() === "") priceEl.textContent = "$—";
+    if (changeEl && changeEl.textContent.trim() === "") changeEl.textContent = "—";
   }
 }
 
 /* =========================
-   Timeframes
+   Timeframe Buttons
    ========================= */
 
 document.querySelectorAll("[data-period]").forEach(btn => {
-  btn.onclick = () => {
+  btn.addEventListener("click", () => {
     document.querySelectorAll("[data-period]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     loadStock(btn.dataset.period);
-  };
+  });
 });
 
 /* =========================
    Init
    ========================= */
 
-if (!TICKER) alert("No ticker provided");
-else loadStock("1y");
+if (!TICKER) {
+  alert("No ticker provided");
+} else {
+  loadStock("1y");
+}

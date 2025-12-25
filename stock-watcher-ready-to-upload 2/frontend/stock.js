@@ -130,14 +130,12 @@ const lastPoint = points[points.length - 1];
 const lastY = lastPoint.y;
 const lastPrice = lastPoint.price;
 
-   const priceBoxOffset = 12;
-const priceBoxWidth = 72;
+   const priceBoxWidth = 72;
+const priceBoxPadding = 10;
 
-// Clamp X so it never overflows right edge
-const priceBoxX = Math.min(
-  lastPoint.x + priceBoxOffset,
-  width - M.right - priceBoxWidth
-);
+// FIX: anchor price box to chart inset, not data point
+const priceBoxX = width - M.right - priceBoxWidth - priceBoxPadding;
+
 
 // Clamp Y so it never overflows top/bottom
 const priceBoxY = Math.min(

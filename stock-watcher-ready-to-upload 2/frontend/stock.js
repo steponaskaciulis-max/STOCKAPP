@@ -101,6 +101,7 @@ function renderChart(data) {
   min = mid - range / 2;
   max = mid + range / 2;
 
+   const padding = (max - min) * 0.15;
   const points = data.map((d, i) => {
     const x = (i / (data.length - 1)) * width;
    const y =
@@ -110,6 +111,8 @@ function renderChart(data) {
 
     return { x, y, price: d.close, time: d.t };
   });
+
+   const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
 
   chartEl.innerHTML = `
     <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
@@ -133,7 +136,7 @@ function renderChart(data) {
       <!-- Area -->
      <polygon
   clip-path="url(#chartClip)"
-  points="0,${height} ${points.join(" ")} ${width},${height}"
+  points="0,${height} ${svgPoints} ${width},${height}"
   fill="url(#fillGrad)"
 />
 

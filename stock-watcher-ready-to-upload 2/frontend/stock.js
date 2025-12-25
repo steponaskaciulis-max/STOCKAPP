@@ -226,6 +226,41 @@ function renderChart(data) {
         clip-path="url(#chartClip)"
       />
 
+<!-- Last price dot -->
+<circle
+  cx="${width}"
+  cy="${lastY}"
+  r="5"
+  fill="#2ecc71"
+  stroke="#0b0b0f"
+  stroke-width="2"
+/>
+
+<!-- Last price label -->
+<rect
+  x="${width - 70}"
+  y="${lastY - 14}"
+  rx="6"
+  ry="6"
+  width="68"
+  height="28"
+  fill="#0b0b0f"
+  stroke="#2ecc71"
+  stroke-width="1"
+/>
+
+<text
+  x="${width - 36}"
+  y="${lastY + 5}"
+  fill="#e5e7eb"
+  font-size="12"
+  font-weight="600"
+  text-anchor="middle"
+>
+  ${lastPrice.toFixed(2)}
+</text>
+
+
       <!-- MAIN LINE -->
       <polyline
         points="${svgPoints}"

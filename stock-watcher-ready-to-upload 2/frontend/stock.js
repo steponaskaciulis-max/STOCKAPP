@@ -93,6 +93,11 @@ function renderChart(data) {
   let min = Math.min(...closes);
   let max = Math.max(...closes);
 
+   const PADDING_LEFT = 56;
+const PADDING_BOTTOM = 28;
+const CHART_WIDTH = width - PADDING_LEFT;
+const CHART_HEIGHT = height - PADDING_BOTTOM;
+
   // Anti-flat scaling (Yahoo-style)
   const realRange = max - min;
   const minVisibleRange = max * 0.06;
@@ -103,14 +108,13 @@ function renderChart(data) {
 
    const padding = (max - min) * 0.15;
   const points = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * width;
-   const y =
-  PAD_TOP +
-  (1 - (d.close - (min - padding)) / ((max - min) + padding * 2)) *
-    innerHeight;
+  const x = PADDING_LEFT + (i / (data.length - 1)) * CHART_WIDTH;
+  const y =
+    CHART_HEIGHT -
+    ((d.close - min) / (max - min)) * CHART_HEIGHT;
+  return { x, y, price: d.close, time: d.t };
+});
 
-    return { x, y, price: d.close, time: d.t };
-  });
 
    const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
 

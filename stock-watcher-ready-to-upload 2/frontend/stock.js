@@ -131,19 +131,24 @@ function renderChart(data) {
       </defs>
 
       <!-- Area -->
-      <polygon
-        points="0,${height} ${points.map(p => `${p.x},${p.y}`).join(" ")} ${width},${height}"
-        fill="url(#fillGrad)"
-      />
+     <polygon
+  clip-path="url(#chartClip)"
+  points="0,${height} ${points.join(" ")} ${width},${height}"
+  fill="url(#fillGrad)"
+/>
+
 
       <!-- Line -->
-      <polyline
-        points="${points.map(p => `${p.x},${p.y}`).join(" ")}"
-        fill="none"
-        stroke="#4c8dff"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
+     <polyline
+  clip-path="url(#chartClip)"
+  points="${points.join(" ")}"
+  fill="none"
+  stroke="#4c8dff"
+  stroke-width="2.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+/>
+
 
       <!-- Crosshair -->
       <line id="crosshair" y1="0" y2="${height}" stroke="#8892b0" stroke-dasharray="4" opacity="0" />

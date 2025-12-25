@@ -125,6 +125,12 @@ function renderChart(data) {
 
   const svgPoints = points.map(p => `${p.x},${p.y}`).join(" ");
 
+   // Last point helpers (FIXES chart crash)
+const lastPoint = points[points.length - 1];
+const lastY = lastPoint.y;
+const lastPrice = lastPoint.price;
+
+   
   // ---- Axis ticks ----
   const yTicks = 4; // horizontal gridlines
   const xTicks = 4; // vertical gridlines (visual only)

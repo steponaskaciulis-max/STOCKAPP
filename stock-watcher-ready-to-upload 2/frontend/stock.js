@@ -142,16 +142,25 @@ function renderChart(data) {
 
 
       <!-- Line -->
-     <polyline
-  clip-path="url(#chartClip)"
-  points="${points.join(" ")}"
+     <!-- OUTLINE (drawn first, thicker & darker) -->
+<polyline
+  points="${svgPoints}"
+  fill="none"
+  stroke="rgba(76,141,255,0.35)"
+  stroke-width="4.5"
+  stroke-linejoin="round"
+  stroke-linecap="round"
+/>
+
+<!-- MAIN LINE (drawn on top) -->
+<polyline
+  points="${svgPoints}"
   fill="none"
   stroke="#4c8dff"
   stroke-width="2.5"
-  stroke-linecap="round"
   stroke-linejoin="round"
+  stroke-linecap="round"
 />
-
 
       <!-- Crosshair -->
       <line id="crosshair" y1="0" y2="${height}" stroke="#8892b0" stroke-dasharray="4" opacity="0" />

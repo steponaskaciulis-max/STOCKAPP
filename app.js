@@ -1340,20 +1340,7 @@ function renderDetailChart(data, symbol) {
                     display: false
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#e2e8f0',
-                    bodyColor: '#e2e8f0',
-                    borderColor: '#2d3748',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return `Price: $${formatNumber(context.parsed.y)}`;
-                        }
-                    }
+                    enabled: false
                 },
                 zoom: {
                     zoom: {

@@ -20,6 +20,9 @@
     --text-muted: #64748b;
     --border-color: #2d3748;
     --shadow: rgba(0, 0, 0, 0.3);
+    --glow-primary: rgba(99, 102, 241, 0.3);
+    --glow-success: rgba(16, 185, 129, 0.3);
+    --glow-danger: rgba(239, 68, 68, 0.3);
 }
 
 html {
@@ -51,13 +54,14 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
 
 /* Navigation */
 .navbar {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0;
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.95) 0%, rgba(26, 35, 50, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    padding: 1.25rem 0;
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px var(--shadow);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
 }
 
 .nav-container {
@@ -297,11 +301,29 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-secondary {
@@ -344,19 +366,37 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
 }
 
 .watchlist-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.8) 0%, rgba(30, 39, 66, 0.8) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    overflow: hidden;
+}
+
+.watchlist-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    transform: scaleX(0);
+    transition: transform 0.4s;
 }
 
 .watchlist-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px var(--shadow);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 60px var(--glow-primary);
     border-color: var(--accent-primary);
+}
+
+.watchlist-card:hover::before {
+    transform: scaleX(1);
 }
 
 .watchlist-card-header {
@@ -466,17 +506,22 @@ input:checked + .toggle-slider:before {
 
 .stock-input {
     flex: 1;
-    padding: 0.75rem 1rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, rgba(30, 39, 66, 0.6) 0%, rgba(26, 35, 50, 0.6) 100%);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     color: var(--text-primary);
     font-size: 1rem;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .stock-input:focus {
     outline: none;
     border-color: var(--accent-primary);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4), 0 0 30px rgba(99, 102, 241, 0.2);
+    transform: translateY(-2px);
 }
 
 /* Stocks Table */
@@ -486,11 +531,13 @@ input:checked + .toggle-slider:before {
 }
 
 .stocks-table-wrapper {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.9) 0%, rgba(30, 39, 66, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     overflow: hidden;
     margin-top: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
 }
 
 .stocks-table {
@@ -500,8 +547,10 @@ input:checked + .toggle-slider:before {
 }
 
 .stocks-table thead {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%);
+    backdrop-filter: blur(10px);
     color: white;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
 }
 
 .stocks-table th {
@@ -515,14 +564,33 @@ input:checked + .toggle-slider:before {
 }
 
 .stocks-table tbody tr {
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.2s;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    position: relative;
+}
+
+.stocks-table tbody tr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+    transform: scaleY(0);
+    transition: transform 0.3s;
 }
 
 .stocks-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(99, 102, 241, 0.1);
+    transform: translateX(4px);
+    box-shadow: -4px 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.stocks-table tbody tr:hover::before {
+    transform: scaleY(1);
 }
 
 .stocks-table tbody tr:last-child {
@@ -557,19 +625,23 @@ input:checked + .toggle-slider:before {
 }
 
 .price-cell {
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 800;
+    font-size: 1.1rem;
     color: var(--text-primary);
+    text-shadow: 0 0 15px rgba(226, 232, 240, 0.3);
+    letter-spacing: 0.5px;
 }
 
 .stocks-table .positive {
     color: var(--accent-success);
-    font-weight: 600;
+    font-weight: 700;
+    text-shadow: 0 0 10px var(--glow-success);
 }
 
 .stocks-table .negative {
     color: var(--accent-danger);
-    font-weight: 600;
+    font-weight: 700;
+    text-shadow: 0 0 10px var(--glow-danger);
 }
 
 .chart-cell {
@@ -601,11 +673,32 @@ input:checked + .toggle-slider:before {
 
 /* Stock Detail Page */
 .stock-detail-header {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 2rem;
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.9) 0%, rgba(30, 39, 66, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
+    padding: 2.5rem;
     margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.stock-detail-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .stock-detail-title {
@@ -643,10 +736,36 @@ input:checked + .toggle-slider:before {
 }
 
 .stock-detail-metric {
-    background: var(--bg-tertiary);
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(30, 39, 66, 0.6) 0%, rgba(26, 35, 50, 0.6) 100%);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.stock-detail-metric::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+.stock-detail-metric:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    border-color: var(--accent-primary);
+}
+
+.stock-detail-metric:hover::before {
+    transform: scaleX(1);
 }
 
 .stock-detail-metric-label {
@@ -662,11 +781,13 @@ input:checked + .toggle-slider:before {
 }
 
 .stock-detail-chart-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 2rem;
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.9) 0%, rgba(30, 39, 66, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
+    padding: 2.5rem;
     margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15);
 }
 
 .chart-controls {
@@ -697,6 +818,9 @@ input:checked + .toggle-slider:before {
 .chart-container {
     position: relative;
     height: 500px;
+    background: rgba(10, 14, 39, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
 }
 
 /* Modal */
@@ -719,12 +843,25 @@ input:checked + .toggle-slider:before {
 }
 
 .modal-content {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.95) 0%, rgba(30, 39, 66, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
     width: 90%;
     max-width: 500px;
-    box-shadow: 0 20px 60px var(--shadow);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 100px rgba(99, 102, 241, 0.2);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .modal-header {

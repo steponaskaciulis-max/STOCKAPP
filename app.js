@@ -1361,20 +1361,28 @@ function renderDetailChart(data, symbol) {
             scales: {
                 x: {
                     grid: {
-                        color: 'rgba(45, 55, 72, 0.5)'
+                        color: 'rgba(99, 102, 241, 0.1)',
+                        lineWidth: 1
                     },
                     ticks: {
                         color: '#94a3b8',
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        font: {
+                            size: 11
+                        }
                     }
                 },
                 y: {
                     grid: {
-                        color: 'rgba(45, 55, 72, 0.5)'
+                        color: 'rgba(99, 102, 241, 0.1)',
+                        lineWidth: 1
                     },
                     ticks: {
                         color: '#94a3b8',
+                        font: {
+                            size: 11
+                        },
                         callback: function(value) {
                             return '$' + formatNumber(value);
                         }

@@ -1,48 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Valyxis · Intelligent Stock Watchlists</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Valyxis - Professional stock market watchlist application with real-time data, advanced charts, and comprehensive analytics">
+    <meta name="keywords" content="stock market, watchlist, stocks, finance, trading, portfolio">
+    <meta name="author" content="Valyxis">
+    <meta name="theme-color" content="#0a0e27">
+    <title>Valyxis - Professional Stock Watch</title>
+    <style>
+        /* Force dark theme immediately - no white backgrounds */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            background: #0a0e27 !important;
+            background-color: #0a0e27 !important;
+        }
+        body {
+            background: #0a0e27 !important;
+            background-color: #0a0e27 !important;
+            color: #e2e8f0 !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        nav, .navbar {
+            background: #141b2d !important;
+            color: #e2e8f0 !important;
+            border-bottom: 1px solid #2d3748 !important;
+            padding: 1rem 0 !important;
+        }
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-link {
+            color: #94a3b8 !important;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-link.active {
+            color: #e2e8f0 !important;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #141b2d 0%, #0a0e27 50%, #1a1f3a 100%) !important;
+            color: #e2e8f0 !important;
+            padding: 6rem 2rem !important;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 1.75rem;
+            color: #94a3b8 !important;
+            margin-bottom: 1.5rem;
+        }
+        .hero-description {
+            font-size: 1.15rem;
+            color: #94a3b8 !important;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            line-height: 1.9;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, #1a2332 0%, #1e2742 100%) !important;
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.2) !important;
+            color: #e2e8f0 !important;
+        }
+        .feature-card h3 {
+            color: #e2e8f0 !important;
+            font-size: 1.4rem;
+            margin-bottom: 0.75rem;
+        }
+        .feature-card p {
+            color: #94a3b8 !important;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 1.25rem 3rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+        h1, h2, h3, h4, h5, h6, p, span, div, a {
+            color: inherit;
+        }
+        .page {
+            background: #0a0e27 !important;
+        }
+        .page-container {
+            background: #0a0e27 !important;
+        }
+    </style>
+    <link rel="stylesheet" href="/styles.css?v=4" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo-icon">V</div>
+                <h1>Valyxis</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#watchlists" class="nav-link" data-page="watchlists" aria-label="Dashboard">Dashboard</a>
+            </div>
+        </div>
+    </nav>
 
-<body class="home">
-
-  <!-- Top Navigation -->
-  <nav class="nav">
-    <div class="brand">
-      <div class="logo-badge">
-        <img src="assets/valyxis-logo.png" alt="Valyxis logo" />
-      </div>
-      <span class="logo-text">Valyxis</span>
+    <!-- Home Page -->
+    <div id="home-page" class="page active">
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Valyxis</h1>
+                <p class="hero-subtitle">Intelligent stock watchlists.</p>
+                <p class="hero-description">Valuation, momentum, and yield — unified.</p>
+                <a href="#watchlists" class="cta-button" data-page="watchlists">
+                    Open Dashboard →
+                </a>
+                <div class="hero-features">
+                    <button class="feature-pill">Valuation</button>
+                    <button class="feature-pill">Momentum</button>
+                    <button class="feature-pill">Dividends</button>
+                    <button class="feature-pill">Drawdowns</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <a class="nav-link" href="dashboard.html">Dashboard</a>
-  </nav>
-
-  <!-- Hero -->
-  <main class="hero">
-    <div class="hero-glow" aria-hidden="true"></div>
-
-    <div class="hero-content">
-      <h1 class="hero-title">Valyxis</h1>
-
-      <p class="hero-subtitle">
-        Intelligent stock watchlists.<br />
-        Valuation, momentum, and yield — unified.
-      </p>
-
-      <a class="cta" href="dashboard.html">Open Dashboard →</a>
-
-      <div class="feature-pills" aria-label="Key features">
-        <span>Valuation</span>
-        <span>Momentum</span>
-        <span>Dividends</span>
-        <span>Drawdowns</span>
-      </div>
+    <!-- Watchlists Page -->
+    <div id="watchlists-page" class="page">
+        <div class="page-container">
+            <div class="page-header">
+                <h2>My Watchlists</h2>
+                <button class="btn btn-primary" id="create-watchlist-btn">
+                    <span>+</span> Create New Watchlist
+                </button>
+            </div>
+            <div id="watchlists-container" class="watchlists-grid">
+                <!-- Watchlists will be dynamically added here -->
+            </div>
+        </div>
     </div>
-  </main>
 
+    <!-- Watchlist Detail Page -->
+    <div id="watchlist-detail-page" class="page">
+        <div class="page-container">
+            <div class="page-header">
+                <button class="btn btn-secondary" id="back-to-watchlists">
+                    ← Back to Watchlists
+                </button>
+                <div class="header-actions">
+                    <div class="auto-refresh-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-refresh-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Auto Refresh</span>
+                    </div>
+                    <button class="btn btn-primary" id="refresh-stocks-btn">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="watchlist-header">
+                <h2 id="watchlist-title">Watchlist</h2>
+                <div class="watchlist-controls">
+                    <button class="btn btn-icon" id="edit-watchlist-name" title="Edit Name">✏️</button>
+                    <button class="btn btn-icon btn-danger" id="delete-watchlist" title="Delete Watchlist">🗑️</button>
+                </div>
+            </div>
+            <div class="add-stock-section">
+                <input type="text" id="stock-input" placeholder="Enter ticker symbol or company name (e.g., AAPL, Apple)" class="stock-input" aria-label="Stock ticker or company name input" autocomplete="off">
+                <button class="btn btn-primary" id="add-stock-btn" aria-label="Add stock to watchlist">Add Stock</button>
+            </div>
+            <div id="stocks-container" class="stocks-grid">
+                <!-- Stocks will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Detail Page -->
+    <div id="stock-detail-page" class="page">
+        <div class="page-container">
+            <div class="page-header">
+                <button class="btn btn-secondary" id="back-to-watchlist">
+                    ← Back to Watchlist
+                </button>
+                <button class="btn btn-danger" id="remove-stock-btn">Remove Stock</button>
+            </div>
+            <div id="stock-detail-container">
+                <!-- Stock details will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Watchlist Modal -->
+    <div id="create-watchlist-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Watchlist</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="new-watchlist-name" placeholder="Enter watchlist name" class="form-input">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirm-create-watchlist">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Watchlist Name Modal -->
+    <div id="edit-watchlist-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Watchlist Name</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="edit-watchlist-name-input" placeholder="Enter new name" class="form-input">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirm-edit-watchlist">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="/app.js?v=4" type="text/javascript"></script>
 </body>
 </html>
+

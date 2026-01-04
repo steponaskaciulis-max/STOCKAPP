@@ -793,34 +793,14 @@ async function parseYahooData(data, symbol) {
     let eps = null;
     let dividendYield = null;
     
-    // Scrape Yahoo Finance directly from their website
-    try {
-        const baseUrl = window.location.origin;
-        const scrapeUrl = `${baseUrl}/api/scrapeYahoo?symbol=${symbol}`;
-        
-        const scrapeResponse = await fetch(scrapeUrl, { signal: AbortSignal.timeout(15000) });
-        
-        if (scrapeResponse && scrapeResponse.ok) {
-            const scrapedData = await scrapeResponse.json();
-            
-            if (scrapedData.sector) sector = scrapedData.sector;
-            if (scrapedData.peRatio !== null && scrapedData.peRatio !== undefined) peRatio = scrapedData.peRatio;
-            if (scrapedData.pegRatio !== null && scrapedData.pegRatio !== undefined) pegRatio = scrapedData.pegRatio;
-            if (scrapedData.eps !== null && scrapedData.eps !== undefined) eps = scrapedData.eps;
-            if (scrapedData.dividendYield !== null && scrapedData.dividendYield !== undefined) dividendYield = scrapedData.dividendYield;
-            
-            console.log(`Scraped data for ${symbol}:`, scrapedData);
-        }
-    } catch (e) {
-        console.log('Scraping failed, trying API method:', e);
-        
-        // Fallback to API method
+    // Try multiple methods to get financial data
+    const proxies = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?'];
+    const yahooSummaryUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=summaryProfile,defaultKeyStatistics,financialData,assetProfile,summaryDetail`;
+    
+    for (const proxy of proxies) {
         try {
-            const proxy = 'https://api.allorigins.win/raw?url=';
-            const yahooSummaryUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=summaryProfile,defaultKeyStatistics,financialData,assetProfile,summaryDetail`;
-            
             const summaryResponse = await fetch(proxy + encodeURIComponent(yahooSummaryUrl), { 
-                signal: AbortSignal.timeout(10000) 
+                signal: AbortSignal.timeout(12000) 
             });
             
             if (summaryResponse && summaryResponse.ok) {
@@ -843,8 +823,9 @@ async function parseYahooData(data, symbol) {
                     const result = summaryData.quoteSummary.result[0];
                     const stats = result.defaultKeyStatistics || {};
                     const detail = result.summaryDetail || {};
+                    const profile = result.summaryProfile || {};
                     
-                    if (result.summaryProfile?.sector) sector = result.summaryProfile.sector;
+                    if (profile.sector) sector = profile.sector;
                     if (stats.trailingPE !== null && stats.trailingPE !== undefined && stats.trailingPE !== 0) {
                         peRatio = stats.trailingPE;
                     } else if (stats.forwardPE !== null && stats.forwardPE !== undefined && stats.forwardPE !== 0) {
@@ -858,15 +839,21 @@ async function parseYahooData(data, symbol) {
                     } else if (stats.forwardEps !== null && stats.forwardEps !== undefined && stats.forwardEps !== 0) {
                         eps = stats.forwardEps;
                     }
-                    if (detail.dividendYield !== null && detail.dividendYield !== undefined) {
+                    if (detail.dividendYield !== null && detail.dividendYield !== undefined && detail.dividendYield > 0) {
                         dividendYield = detail.dividendYield * 100;
                     } else if (detail.dividendRate !== null && detail.dividendRate !== undefined && price && price > 0) {
                         dividendYield = (detail.dividendRate / price) * 100;
                     }
+                    
+                    // If we got data, break out of loop
+                    if (sector !== 'N/A' || peRatio || eps || pegRatio || dividendYield) {
+                        break;
+                    }
                 }
             }
         } catch (apiError) {
-            console.error('API method also failed:', apiError);
+            console.log(`Proxy ${proxy} failed, trying next...`, apiError);
+            continue;
         }
     }
     

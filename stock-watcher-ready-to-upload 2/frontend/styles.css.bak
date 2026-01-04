@@ -592,7 +592,7 @@ input:checked + .toggle-slider:before {
     min-width: 1400px;
     border-collapse: collapse;
     font-size: 0.9rem;
-    table-layout: auto;
+    table-layout: fixed;
 }
 
 .stocks-table thead {
@@ -617,76 +617,20 @@ input:checked + .toggle-slider:before {
     z-index: 10;
 }
 
-.stocks-table th:nth-child(1),
-.stocks-table td:nth-child(1) { 
-    min-width: 150px; 
-    width: 150px;
-} /* Ticker */
-.stocks-table th:nth-child(2),
-.stocks-table td:nth-child(2) { 
-    min-width: 120px; 
-    width: 120px;
-} /* Sector */
-.stocks-table th:nth-child(3),
-.stocks-table td:nth-child(3) { 
-    min-width: 100px; 
-    width: 100px;
-} /* Price */
-.stocks-table th:nth-child(4),
-.stocks-table td:nth-child(4) { 
-    min-width: 80px; 
-    width: 80px;
-} /* 1D% */
-.stocks-table th:nth-child(5),
-.stocks-table td:nth-child(5) { 
-    min-width: 80px; 
-    width: 80px;
-} /* 1W% */
-.stocks-table th:nth-child(6),
-.stocks-table td:nth-child(6) { 
-    min-width: 80px; 
-    width: 80px;
-} /* 1M% */
-.stocks-table th:nth-child(7),
-.stocks-table td:nth-child(7) { 
-    min-width: 80px; 
-    width: 80px;
-} /* P/E */
-.stocks-table th:nth-child(8),
-.stocks-table td:nth-child(8) { 
-    min-width: 80px; 
-    width: 80px;
-} /* PEG */
-.stocks-table th:nth-child(9),
-.stocks-table td:nth-child(9) { 
-    min-width: 80px; 
-    width: 80px;
-} /* EPS */
-.stocks-table th:nth-child(10),
-.stocks-table td:nth-child(10) { 
-    min-width: 90px; 
-    width: 90px;
-} /* DIV % */
-.stocks-table th:nth-child(11),
-.stocks-table td:nth-child(11) { 
-    min-width: 110px; 
-    width: 110px;
-} /* 52W High */
-.stocks-table th:nth-child(12),
-.stocks-table td:nth-child(12) { 
-    min-width: 120px; 
-    width: 120px;
-} /* Δ from 52W */
-.stocks-table th:nth-child(13),
-.stocks-table td:nth-child(13) { 
-    min-width: 120px; 
-    width: 120px;
-} /* Chart */
-.stocks-table th:nth-child(14),
-.stocks-table td:nth-child(14) { 
-    min-width: 100px; 
-    width: 100px;
-} /* Action */
+.stocks-table th:nth-child(1) { min-width: 150px; } /* Ticker */
+.stocks-table th:nth-child(2) { min-width: 120px; } /* Sector */
+.stocks-table th:nth-child(3) { min-width: 100px; } /* Price */
+.stocks-table th:nth-child(4) { min-width: 80px; }  /* 1D% */
+.stocks-table th:nth-child(5) { min-width: 80px; }  /* 1W% */
+.stocks-table th:nth-child(6) { min-width: 80px; }  /* 1M% */
+.stocks-table th:nth-child(7) { min-width: 80px; }  /* P/E */
+.stocks-table th:nth-child(8) { min-width: 80px; }  /* PEG */
+.stocks-table th:nth-child(9) { min-width: 80px; }  /* EPS */
+.stocks-table th:nth-child(10) { min-width: 90px; } /* DIV % */
+.stocks-table th:nth-child(11) { min-width: 110px; } /* 52W High */
+.stocks-table th:nth-child(12) { min-width: 120px; } /* Δ from 52W */
+.stocks-table th:nth-child(13) { min-width: 120px; } /* Chart */
+.stocks-table th:nth-child(14) { min-width: 100px; } /* Action */
 
 .stocks-table tbody tr {
     background: rgba(255, 255, 255, 0.03);

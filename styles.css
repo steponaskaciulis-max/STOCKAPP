@@ -90,16 +90,31 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
     align-items: center;
 }
 
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
 .nav-brand h1 {
-    font-size: 2.5rem;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    text-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
-    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.4));
+    font-size: 1.5rem;
+    color: white;
+    font-weight: 600;
+    margin: 0;
 }
 
 .nav-links {
@@ -162,69 +177,66 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
 
 /* Hero Section */
 .hero-section {
-    padding: 6rem 2rem;
+    padding: 8rem 2rem 6rem;
     text-align: center;
-    background: linear-gradient(135deg, #141b2d 0%, #0a0e27 50%, #1a1f3a 100%);
+    background: linear-gradient(135deg, #0a0e27 0%, #0f1419 50%, #0a0e27 100%);
     position: relative;
     overflow: hidden;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hero-section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
     pointer-events: none;
+    z-index: 0;
 }
 
 .hero-content {
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .hero-title {
-    font-size: 5rem;
-    font-weight: 900;
-    margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.03em;
-    text-shadow: 0 0 60px rgba(99, 102, 241, 0.6);
-    filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.5));
-    animation: titleGlow 3s ease-in-out infinite alternate;
-}
-
-@keyframes titleGlow {
-    0% { filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.5)); }
-    100% { filter: drop-shadow(0 0 50px rgba(236, 72, 153, 0.6)); }
+    font-size: 5.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: white;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
 }
 
 .hero-subtitle {
-    font-size: 1.75rem;
-    color: #94a3b8;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-}
-
-.hero-description {
-    font-size: 1.15rem;
-    color: #94a3b8;
-    max-width: 800px;
-    margin: 0 auto 3rem;
-    line-height: 1.9;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 0.5rem;
     font-weight: 400;
 }
 
-.hero-features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
+.hero-description {
+    font-size: 1.1rem;
+    color: rgba(226, 232, 240, 0.7);
     margin-bottom: 3rem;
+    font-weight: 300;
+}
+
+.hero-features {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
 }
 
 .feature-card {
@@ -280,17 +292,19 @@ h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th {
 
 .cta-button {
     display: inline-block;
-    padding: 1.25rem 3rem;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white !important;
     text-decoration: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1.15rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
     position: relative;
     overflow: hidden;
+    border: none;
+    cursor: pointer;
 }
 
 .cta-button::before {
